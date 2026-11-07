@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nota RPU</title>
+<meta name="theme-color" content="#1e3a8a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nota RPU">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+  html,body{margin:0;height:100%;background:#000;overflow:hidden}
+  #app{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;
+       padding-top:env(safe-area-inset-top)}
+  #splash{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;
+          align-items:center;justify-content:center;gap:18px;color:#fff;
+          font-family:system-ui,Arial,sans-serif;transition:opacity .4s;z-index:2}
+  #splash img{width:150px;height:150px}
+  #splash.hilang{opacity:0;pointer-events:none}
+  #splash small{opacity:.7}
+  #err{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e3a8a;color:#fff;
+       padding:12px 16px;font:14px system-ui,Arial,sans-serif;text-align:center;z-index:3}
+  #err a{color:#fff;font-weight:700}
+</style>
+</head>
+<body>
+<div id="splash">
+  <img src="icons/logo.png" alt="Logo RPU">
+  <div><b>PT RAFASYA PUTRA USTANTO</b></div>
+  <small>Memuat aplikasi nota...</small>
+</div>
+
+<iframe id="app" title="Nota RPU"
+  allow="clipboard-write; fullscreen"
+  src="https://script.google.com/macros/s/AKfycby4brwtjiA3e3mWEYSXxgq3WtiVMgwJ24-Og-XEj-gVejjoPKh7jTq_xPC7gVgM36xeCg/exec"></iframe>
+
+<div id="err">Tidak bisa memuat? <a href="https://script.google.com/macros/s/AKfycby4brwtjiA3e3mWEYSXxgq3WtiVMgwJ24-Og-XEj-gVejjoPKh7jTq_xPC7gVgM36xeCg/exec">Buka langsung</a></div>
+
+<script>
+  var f = document.getElementById('app'), sp = document.getElementById('splash');
+  f.addEventListener('load', function(){ sp.classList.add('hilang'); });
+  setTimeout(function(){ sp.classList.add('hilang'); }, 8000);
+  setTimeout(function(){
+    if(!navigator.onLine) document.getElementById('err').style.display = 'block';
+  }, 3000);
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js'); });
+  }
+</script>
+</body>
+</html>
