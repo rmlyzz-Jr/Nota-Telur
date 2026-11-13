@@ -606,12 +606,17 @@
 
   function muatRekap(){
     var tb = document.getElementById('isiRekap');
+    // Default: hanya data hari ini bila filter kosong
+    var elDari = document.getElementById('dari'), elSampai = document.getElementById('sampai');
+    if(!elDari.value && !elSampai.value){
+      elDari.value = hariIniLokal(); elSampai.value = hariIniLokal();
+    }
     tb.innerHTML = '<tr><td colspan="7" class="kosong">Memuat...</td></tr>';
-    panggil('getRekap', [document.getElementById('dari').value, document.getElementById('sampai').value])
+    panggil('getRekap', [elDari.value, elSampai.value])
       .then(function(res){
         var f = document.getElementById('footRekap');
         if(!res.rows.length){
-          tb.innerHTML = '<tr><td colspan="7" class="kosong">Belum ada data nota</td></tr>';
+          tb.innerHTML = '<tr><td colspan="7" class="kosong">Tidak ada nota pada tanggal ini</td></tr>';
           f.innerHTML = ''; return;
         }
         window.REKAP = {};
