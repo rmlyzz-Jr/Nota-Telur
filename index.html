@@ -3,53 +3,689 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Nota RPU</title>
+<title>Nota - PT Rafasya Putra Ustanto</title>
 <meta name="theme-color" content="#1e3a8a">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nota RPU">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
-  html,body{margin:0;height:100%;background:#000;overflow:hidden}
-  #app{position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff;
-       padding-top:env(safe-area-inset-top)}
-  #splash{position:fixed;inset:0;background:#000;display:flex;flex-direction:column;
-          align-items:center;justify-content:center;gap:18px;color:#fff;
-          font-family:system-ui,Arial,sans-serif;transition:opacity .4s;z-index:2}
-  #splash img{width:150px;height:150px}
-  #splash.hilang{opacity:0;pointer-events:none}
-  #splash small{opacity:.7}
-  #err{display:none;position:fixed;left:0;right:0;bottom:0;background:#1e3a8a;color:#fff;
-       padding:12px 16px;font:14px system-ui,Arial,sans-serif;text-align:center;z-index:3}
-  #err a{color:#fff;font-weight:700}
+  :root{--biru:#1e3a8a;--biru2:#2563eb;--bg:#f1f5f9;--kartu:#fff;--garis:#cbd5e1;--teks:#0f172a;--redup:#64748b;--ok:#16a34a;--bahaya:#dc2626;--peringatan:#d97706;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--teks);}
+  header{background:var(--biru);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;}
+  header img{height:46px;background:#fff;border-radius:8px;padding:3px;}
+  header h1{font-size:17px;margin:0;line-height:1.2}
+  header small{opacity:.8}
+  header .grow{flex:1}
+  #btnPasang{display:none;padding:9px 12px;border:0;border-radius:8px;background:#fff;color:var(--biru);font-weight:700;font-size:13px;cursor:pointer}
+  .tabs{display:flex;background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
+  .tab{flex:1;padding:13px;text-align:center;font-weight:600;color:var(--redup);cursor:pointer;border:0;background:none;font-size:15px;border-bottom:3px solid transparent}
+  .tab.aktif{color:var(--biru);border-bottom-color:var(--biru)}
+  main{max-width:760px;margin:0 auto;padding:16px;padding-bottom:90px}
+  .kartu{background:var(--kartu);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .kartu h3{margin:0 0 12px;font-size:14px;color:var(--biru);text-transform:uppercase;letter-spacing:.04em}
+  label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
+  input,select{width:100%;padding:11px;border:1px solid var(--garis);border-radius:8px;font-size:15px;background:#fff;color:var(--teks)}
+  input:focus,select:focus{outline:2px solid var(--biru2);border-color:var(--biru2)}
+  input[readonly]{background:#f8fafc;color:var(--redup)}
+  .baris{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  .full{grid-column:1/-1}
+  .total-box{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 12px;background:#eef2ff;border-radius:8px;font-weight:600}
+  .grand{background:var(--biru);color:#fff;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .grand span:last-child{font-size:24px;font-weight:700}
+  .tombol{display:flex;gap:10px;flex-wrap:wrap}
+  button.btn{flex:1;padding:14px;border:0;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;color:#fff;background:var(--biru2)}
+  button.btn.sek{background:#e2e8f0;color:var(--teks)}
+  button.btn:disabled{opacity:.6;cursor:wait}
+  .kecil-btn{padding:6px 10px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;color:#fff;background:var(--biru2);margin-right:4px}
+  .kecil-btn.hapus{background:var(--bahaya)}
+  .filter{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+  .tabel-wrap{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+  th{background:var(--biru);color:#fff;text-align:left;padding:9px;white-space:nowrap}
+  td{padding:9px;border-bottom:1px solid #e2e8f0;white-space:nowrap}
+  td.r,th.r{text-align:right}
+  tfoot td{font-weight:700;background:#eef2ff}
+  .kosong{text-align:center;color:var(--redup);padding:24px}
+  .status-printer{margin-top:10px;font-size:13px;font-weight:600;color:var(--redup)}
+  .status-printer.ok{color:var(--ok)}
+  .status-printer.warn{color:var(--peringatan)}
+  .status-printer.err{color:var(--bahaya)}
+  #statusServer{font-size:12px;margin-top:6px;color:var(--redup)}
+  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:20;max-width:90%}
+  #toast.tampil{opacity:1}
+  #toast.err{background:var(--bahaya)}
+  #toast.ok{background:var(--ok)}
+  .hidden{display:none}
+  @media(max-width:520px){.filter{grid-template-columns:1fr 1fr}.filter button{grid-column:1/-1}}
 </style>
 </head>
 <body>
-<div id="splash">
-  <img src="icons/logo.png" alt="Logo RPU">
-  <div><b>PT RAFASYA PUTRA USTANTO</b></div>
-  <small>Memuat aplikasi nota...</small>
+
+<header>
+  <img id="logo" src="https://rmlyzz-jr.github.io/SRPU-app/assets/images/logo-rpu.png" alt="Logo RPU" onerror="this.src='icons/icon-192.png'">
+  <div class="grow">
+    <h1>PT RAFASYA PUTRA USTANTO</h1>
+    <small>Aplikasi Cetak Nota</small>
+  </div>
+  <button id="btnPasang" onclick="pasangAplikasi()">Pasang</button>
+</header>
+
+<div class="tabs">
+  <button class="tab aktif" id="tab-input" onclick="bukaTab('input')">Input</button>
+  <button class="tab" id="tab-rekap" onclick="bukaTab('rekap')">Rekap</button>
 </div>
 
-<iframe id="app" title="Nota RPU"
-  allow="clipboard-write; fullscreen"
-  src="https://script.google.com/macros/s/AKfycbzEyw8vnrOT-SAYFFqOvj5MQoZUZi9lBSMhdyLjsamOGANAiyn_aHequLHgndfC2ycshg/exec"></iframe>
+<main>
+  <!-- ===== TAB INPUT ===== -->
+  <section id="panel-input">
+    <div class="kartu">
+      <h3>Data Nota</h3>
+      <div class="baris">
+        <div>
+          <label for="tanggal">Tanggal</label>
+          <input type="date" id="tanggal" onchange="ubahTanggal()">
+        </div>
+        <div>
+          <label for="hari">Hari</label>
+          <input type="text" id="hari" readonly>
+        </div>
+        <div class="full">
+          <label for="nama">Nama</label>
+          <input type="text" id="nama" placeholder="Nama pembeli / toko" autocomplete="off">
+        </div>
+      </div>
+    </div>
 
-<div id="err">Tidak bisa memuat? <a href="https://script.google.com/macros/s/AKfycbzEyw8vnrOT-SAYFFqOvj5MQoZUZi9lBSMhdyLjsamOGANAiyn_aHequLHgndfC2ycshg/exec">Buka langsung</a></div>
+    <div class="kartu">
+      <h3>Telur Besar</h3>
+      <div class="baris">
+        <div>
+          <label for="besarQty">Qty</label>
+          <input type="number" id="besarQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung()">
+        </div>
+        <div>
+          <label for="besarHarga">Harga (Rp)</label>
+          <input type="text" id="besarHarga" inputmode="numeric" value="150.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung()">
+        </div>
+      </div>
+      <div class="total-box"><span>Total Telur Besar</span><span id="besarTotal">Rp 0</span></div>
+    </div>
+
+    <div class="kartu">
+      <h3>Telur Kecil</h3>
+      <div class="baris">
+        <div>
+          <label for="kecilQty">Qty</label>
+          <input type="number" id="kecilQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung()">
+        </div>
+        <div>
+          <label for="kecilHarga">Harga (Rp)</label>
+          <input type="text" id="kecilHarga" inputmode="numeric" value="50.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung()">
+        </div>
+      </div>
+      <div class="total-box"><span>Total Telur Kecil</span><span id="kecilTotal">Rp 0</span></div>
+    </div>
+
+    <div class="grand"><span>GRAND TOTAL</span><span id="grandTotal">Rp 0</span></div>
+
+    <div class="kartu">
+      <h3>Printer Thermal</h3>
+      <label for="metodeCetak">Metode cetak</label>
+      <select id="metodeCetak" onchange="ubahMetode()">
+        <option value="cleanter">Cleanter (Bluetooth)</option>
+        <option value="rawbt">RawBT</option>
+        <option value="browser">Dialog cetak browser</option>
+      </select>
+      <div id="statusPrinter" class="status-printer"></div>
+      <div id="statusServer"></div>
+    </div>
+
+    <div class="tombol">
+      <button class="btn sek" onclick="reset()">Reset</button>
+      <button class="btn" id="btnCetak" onclick="simpanDanCetak('thermal')">Cetak Nota</button>
+    </div>
+  </section>
+
+  <!-- ===== TAB REKAP ===== -->
+  <section id="panel-rekap" class="hidden">
+    <div class="kartu">
+      <h3>Filter Tanggal</h3>
+      <div class="filter">
+        <div><label for="dari">Dari</label><input type="date" id="dari"></div>
+        <div><label for="sampai">Sampai</label><input type="date" id="sampai"></div>
+        <button class="btn" style="padding:11px 18px" onclick="muatRekap()">Tampilkan</button>
+      </div>
+    </div>
+    <div class="kartu tabel-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No Nota</th><th>Tanggal</th><th>Nama</th>
+            <th class="r">Besar</th><th class="r">Kecil</th><th class="r">Grand Total</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="isiRekap"><tr><td colspan="7" class="kosong">Memuat...</td></tr></tbody>
+        <tfoot id="footRekap"></tfoot>
+      </table>
+    </div>
+  </section>
+</main>
+
+<div id="barCetak" style="display:none;position:fixed;left:0;right:0;bottom:0;background:#0f172a;color:#fff;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));align-items:center;gap:10px;z-index:15;flex-wrap:wrap">
+  <span id="barTeks" style="flex:1;font-size:13px;min-width:160px"></span>
+  <button class="kecil-btn" style="padding:10px 14px;font-size:14px" onclick="cetakTerakhir()">Cetak Lagi</button>
+  <button class="kecil-btn" style="background:#0f766e;padding:10px 14px;font-size:14px" onclick="cetakDialogTerakhir()">Dialog Cetak</button>
+  <button class="kecil-btn" style="background:#475569;padding:10px 14px;font-size:14px" onclick="document.getElementById('barCetak').style.display='none'">Tutup</button>
+</div>
+
+<div id="toast"></div>
 
 <script>
-  var f = document.getElementById('app'), sp = document.getElementById('splash');
-  f.addEventListener('load', function(){ sp.classList.add('hilang'); });
-  setTimeout(function(){ sp.classList.add('hilang'); }, 8000);
-  setTimeout(function(){
-    if(!navigator.onLine) document.getElementById('err').style.display = 'block';
-  }, 3000);
-  if('serviceWorker' in navigator){
-    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js'); });
+  /* =====================================================================
+     PENGATURAN UTAMA
+     API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
+     ===================================================================== */
+  var API_URL = 'https://script.google.com/macros/s/AKfycbyRT_rKjB8XZTnrdn3qLk0D2bkOxlLvvfrvhJKf6s0-FaL71HDwtG7pf-BkiFnRBfoe2A/exec';
+
+  var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+
+  /* ===== Pengaturan nota ===== */
+  var LOGO_NOTA = 'https://i.ibb.co.com/5x5cYWgk/Monochrome-Fish-Wave-Emblem-Logo.png'; // logo untuk cetak nota (dialog cetak browser)
+  var NOTA_LEBAR  = 65; // mm
+  var NOTA_TINGGI = 65; // mm (panjang maksimal nota)
+
+  /* ===== Pengaturan Cleanter ===== */
+  var CLEANTER_URL    = 'http://localhost:9100';
+  var CLEANTER_KERTAS = 80;        // 80 (48 karakter) atau 58 (32 karakter)
+  var CLEANTER_JUDUL  = 'normal';  // ukuran nama PT: 'normal' atau 'large' (large bisa terpotong di 58 mm)
+
+  /* ===== Panggilan ke Apps Script (pengganti google.script.run) ===== */
+  function panggil(fn, args){
+    // Tanpa header khusus agar tidak memicu preflight CORS
+    return fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      body: JSON.stringify({fn: fn, args: args || []})
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(j){
+      if(!j || !j.ok) throw new Error((j && j.error) || 'Server tidak merespons');
+      return j.data;
+    })
+    .catch(function(e){
+      if(e instanceof TypeError) throw new Error('Tidak bisa terhubung ke server. Periksa internet / URL Apps Script.');
+      throw e;
+    });
   }
+
+  function rp(n){ return 'Rp ' + Math.round(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+  function num(id){ var v = parseFloat(String(document.getElementById(id).value).replace(',','.')); return isNaN(v)||v<0?0:v; }
+  function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function qty(n){ return String(Math.round(n*100)/100).replace('.',','); }
+
+  function toast(msg, tipe){
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'tampil ' + (tipe||'');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function(){ t.className=''; }, 3600);
+  }
+
+  function bukaTab(nama){
+    ['input','rekap'].forEach(function(n){
+      document.getElementById('panel-'+n).classList.toggle('hidden', n!==nama);
+      document.getElementById('tab-'+n).classList.toggle('aktif', n===nama);
+    });
+    if(nama==='rekap') muatRekap();
+  }
+
+  function hariDariTanggal(str){
+    if(!str) return '';
+    var p = str.split('-');
+    return HARI_ID[new Date(+p[0], +p[1]-1, +p[2]).getDay()];
+  }
+  function hariIniLokal(){
+    var d = new Date();
+    var m = ('0'+(d.getMonth()+1)).slice(-2), t = ('0'+d.getDate()).slice(-2);
+    return d.getFullYear()+'-'+m+'-'+t;
+  }
+  function ubahTanggal(){
+    document.getElementById('hari').value = hariDariTanggal(document.getElementById('tanggal').value);
+  }
+
+  function harga(id){
+    var v = parseInt(String(document.getElementById(id).value).replace(/\./g,''), 10);
+    return isNaN(v) || v < 0 ? 0 : v;
+  }
+  function formatHarga(el){
+    var d = el.value.replace(/\D/g,'');
+    el.value = d ? d.replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
+  }
+
+  function hitung(){
+    var bt = num('besarQty')*harga('besarHarga');
+    var kt = num('kecilQty')*harga('kecilHarga');
+    document.getElementById('besarTotal').textContent = rp(bt);
+    document.getElementById('kecilTotal').textContent = rp(kt);
+    document.getElementById('grandTotal').textContent = rp(bt+kt);
+  }
+
+  function reset(){
+    ['nama','besarQty','kecilQty'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById('besarHarga').value = '150.000';
+    document.getElementById('kecilHarga').value = '50.000';
+    document.getElementById('tanggal').value = hariIniLokal();
+    ubahTanggal(); hitung();
+  }
+
+  function unduhPdf(hasil){
+    var bin = atob(hasil.base64), arr = new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) arr[i] = bin.charCodeAt(i);
+    var blob = new Blob([arr], {type:'application/pdf'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = hasil.nama;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  }
+
+  function angka(n){ return Math.round(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+
+  function setBusy(sibuk){
+    var c = document.getElementById('btnCetak');
+    c.disabled = sibuk;
+    c.textContent = sibuk ? 'Memproses...' : 'Cetak Nota';
+  }
+
+  /* ===== Pilihan metode cetak (disimpan di perangkat) ===== */
+  function ambilMetode(){
+    var m = 'cleanter';
+    try{ m = localStorage.getItem('metodeCetak') || 'cleanter'; }catch(e){}
+    if(['cleanter','rawbt','browser'].indexOf(m) < 0) m = 'cleanter';
+    return m;
+  }
+  function ubahMetode(){
+    var m = document.getElementById('metodeCetak').value;
+    try{ localStorage.setItem('metodeCetak', m); }catch(e){}
+    cekCleanter();
+  }
+  function setStatus(teks, kelas){
+    var el = document.getElementById('statusPrinter');
+    el.textContent = teks;
+    el.className = 'status-printer ' + (kelas||'');
+  }
+
+  /* ===== Cek status Cleanter (GET /health) ===== */
+  function cekCleanter(){
+    if(ambilMetode() !== 'cleanter'){
+      setStatus(ambilMetode()==='rawbt' ? 'Memakai aplikasi RawBT.' : 'Memakai dialog cetak browser (bisa lewat Print Service Cleanter).', '');
+      return;
+    }
+    setStatus('Memeriksa Cleanter...', '');
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var tm = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 2500);
+    fetch(CLEANTER_URL + '/health', ctrl ? {signal: ctrl.signal} : {})
+      .then(function(r){ return r.json(); })
+      .then(function(j){
+        clearTimeout(tm);
+        var p = j && j.printer;
+        if(p && p.connected){
+          setStatus('Cleanter siap. Printer: ' + (p.name || p.address || 'terhubung'), 'ok');
+        } else {
+          setStatus('Cleanter aktif, tetapi printer belum tersambung' + (p && p.problem ? ' (' + p.problem + ')' : '') + '. Buka Cleanter dan pilih printer.', 'warn');
+        }
+      })
+      .catch(function(){
+        clearTimeout(tm);
+        setStatus('Cleanter tidak terdeteksi. Buka aplikasi Cleanter lalu tekan Start.', 'err');
+      });
+  }
+
+  /* ===== Cek koneksi ke server Apps Script ===== */
+  function cekServer(){
+    var el = document.getElementById('statusServer');
+    el.textContent = 'Server: memeriksa...';
+    fetch(API_URL + '?action=ping', {redirect:'follow'})
+      .then(function(r){ return r.json(); })
+      .then(function(j){ el.textContent = (j && j.ok) ? 'Server: terhubung' : 'Server: Code.gs belum versi API (deploy ulang)'; })
+      .catch(function(){ el.textContent = 'Server: tidak terjangkau (periksa internet / deploy)'; });
+  }
+
+  /* ===== Cetak lewat Cleanter (POST JSON ke localhost:9100/print) ===== */
+  var NOTA_TERAKHIR = null;
+
+  function ascii(s){ return String(s==null ? '' : s).replace(/[^\x20-\x7E]/g,'?'); }
+
+  function buatKontenCleanter(o){
+    var c = [];
+    c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
+    c.push({type:'text', text:'NOTA PENJUALAN', align:'center', bold:true});
+    c.push({type:'divider'});
+    c.push({type:'row', left:'Tanggal', right:ascii(o.hari) + ', ' + ascii(o.tanggal)});
+    c.push({type:'text', text:'Nama: ' + ascii(o.nama)});
+    c.push({type:'divider'});
+    if(o.besarQty > 0){
+      c.push({type:'text', text:'Telur Besar', bold:true});
+      c.push({type:'row', left:qty(o.besarQty) + ' Kg x ' + angka(o.besarHarga), right:angka(o.besarTotal)});
+    }
+    if(o.kecilQty > 0){
+      c.push({type:'text', text:'Telur Kecil', bold:true});
+      c.push({type:'row', left:qty(o.kecilQty) + ' Kg x ' + angka(o.kecilHarga), right:angka(o.kecilTotal)});
+    }
+    c.push({type:'divider'});
+    c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
+    c.push({type:'feed', lines:2});
+    return c;
+  }
+
+  function pesanGagalCleanter(j){
+    if(j && j.fix) return j.fix;
+    if(j && j.detail) return j.detail;
+    if(j && j.error) return j.error;
+    return 'Gagal mencetak lewat Cleanter';
+  }
+
+  function cetakCleanter(o){
+    NOTA_TERAKHIR = o;
+    var ctrl = window.AbortController ? new AbortController() : null;
+    var tm = setTimeout(function(){ if(ctrl) ctrl.abort(); }, 20000);
+    var opsi = {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        paperWidth: CLEANTER_KERTAS,
+        cut: true,
+        reference: String(o.noNota || ''),
+        content: buatKontenCleanter(o)
+      })
+    };
+    if(ctrl) opsi.signal = ctrl.signal;
+
+    fetch(CLEANTER_URL + '/print', opsi)
+      .then(function(r){
+        return r.json().catch(function(){ return {}; }).then(function(j){ return {ok:r.ok, j:j}; });
+      })
+      .then(function(hasil){
+        clearTimeout(tm);
+        if(hasil.ok){
+          toast('Nota ' + o.noNota + ' tercetak', 'ok');
+          setStatus('Cleanter siap.', 'ok');
+        } else {
+          var pesan = pesanGagalCleanter(hasil.j);
+          toast(pesan, 'err');
+          tampilBar('Cetak gagal: ' + pesan);
+        }
+      })
+      .catch(function(){
+        clearTimeout(tm);
+        toast('Cleanter tidak terjangkau. Buka aplikasi Cleanter lalu tekan Start.', 'err');
+        setStatus('Cleanter tidak terdeteksi. Buka aplikasi Cleanter lalu tekan Start.', 'err');
+        tampilBar('Cleanter tidak terdeteksi. Nota ' + o.noNota + ' sudah tersimpan.');
+      });
+  }
+
+  /* ===== Cetak ke printer thermal 80 mm lewat aplikasi RawBT (ESC/POS) ===== */
+  function buatEscPos(o){
+    var W = 48, out = [];
+    function t(s){ s = String(s).replace(/[^\x20-\x7E]/g,'?'); for(var i=0;i<s.length;i++) out.push(s.charCodeAt(i)); }
+    function cmd(){ for(var i=0;i<arguments.length;i++) out.push(arguments[i]); }
+    function pr(s,w){ s=String(s); while(s.length<w) s+=' '; return s.substring(0,w); }
+    function pl(s,w){ s=String(s); while(s.length<w) s=' '+s; return s; }
+    function garis(){ t(new Array(W+1).join('-')+'\n'); }
+    function info(label,val){
+      var pre = pr(label,8)+': ', lv = W-pre.length;
+      val = String(val);
+      t(pre+val.substring(0,lv)+'\n');
+      var sisa = val.substring(lv);
+      while(sisa.length){ t(new Array(pre.length+1).join(' ')+sisa.substring(0,lv)+'\n'); sisa = sisa.substring(lv); }
+    }
+    function baris(j,q,h,tt){ t(pr(j,8)+pl(q,10)+pl(h,14)+pl(tt,16)+'\n'); }
+
+    cmd(0x1B,0x40);                       // reset printer
+    cmd(0x1B,0x61,1);                     // rata tengah
+    cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);// tebal + tinggi 2x
+    t('PT RAFASYA PUTRA USTANTO\n');
+    cmd(0x1D,0x21,0x00);
+    t('NOTA PENJUALAN\n');
+    cmd(0x1B,0x45,0);
+    cmd(0x1B,0x61,0);                     // rata kiri
+    garis();
+    info('Tanggal', o.hari + ', ' + o.tanggal);
+    info('Nama', o.nama);
+    garis();
+    cmd(0x1B,0x45,1);
+    baris('JENIS','QTY','HARGA','TOTAL');
+    cmd(0x1B,0x45,0);
+    garis();
+    if(o.besarQty>0) baris('BESAR', qty(o.besarQty)+' Kg', angka(o.besarHarga), angka(o.besarTotal));
+    if(o.kecilQty>0) baris('KECIL', qty(o.kecilQty)+' Kg', angka(o.kecilHarga), angka(o.kecilTotal));
+    garis();
+    cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x11);// tebal + 2x2 (24 kolom)
+    t(pr('TOTAL',10)+pl(rp(o.grandTotal),14)+'\n');
+    cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0);
+    cmd(0x1B,0x64,3);                     // feed 3 baris
+    return out;
+  }
+
+  function keBase64(bytes){
+    var s = '';
+    for(var i=0;i<bytes.length;i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+
+  function tampilBar(teks){
+    document.getElementById('barTeks').textContent = teks;
+    document.getElementById('barCetak').style.display = 'flex';
+    clearTimeout(tampilBar._t);
+    tampilBar._t = setTimeout(function(){ document.getElementById('barCetak').style.display='none'; }, 40000);
+  }
+
+  function cetakRawBT(o){
+    NOTA_TERAKHIR = o;
+    var url = 'intent:base64,' + keBase64(buatEscPos(o)) +
+      '#Intent;scheme=rawbt;package=ru.a402d.rawbtprinter;end;';
+    var a = document.createElement('a');
+    a.href = url; a.target = '_top'; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    tampilBar('Nota ' + o.noNota + ' dikirim ke RawBT. Belum tercetak?');
+  }
+
+  /* Pintu masuk cetak thermal: mengikuti metode yang dipilih */
+  function cetakThermal(o){
+    NOTA_TERAKHIR = o;
+    var m = ambilMetode();
+    if(m === 'rawbt') cetakRawBT(o);
+    else if(m === 'browser') cetakBrowser(o);
+    else cetakCleanter(o);
+  }
+
+  function cetakTerakhir(){ if(NOTA_TERAKHIR) cetakThermal(NOTA_TERAKHIR); }
+  function cetakDialogTerakhir(){ if(NOTA_TERAKHIR) cetakBrowser(NOTA_TERAKHIR); }
+
+  /* Cetak lewat dialog cetak browser (bisa memakai Print Service Cleanter) */
+  function cetakBrowser(o){
+    var lebar = NOTA_LEBAR, tinggi = NOTA_TINGGI;   // mm
+    var isi = lebar - 6;
+    var baris = '';
+    if(o.besarQty>0) baris += '<tr><td>BESAR</td><td class="r">'+qty(o.besarQty)+' Kg</td><td class="r">'+angka(o.besarHarga)+'</td><td class="r">'+angka(o.besarTotal)+'</td></tr>';
+    if(o.kecilQty>0) baris += '<tr><td>KECIL</td><td class="r">'+qty(o.kecilQty)+' Kg</td><td class="r">'+angka(o.kecilHarga)+'</td><td class="r">'+angka(o.kecilTotal)+'</td></tr>';
+
+    var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota</title><style>'+
+      '@page{size:'+lebar+'mm '+tinggi+'mm;margin:0}'+
+      'html,body{margin:0;padding:0;background:#fff;height:'+tinggi+'mm;overflow:hidden}'+
+      'body{width:'+isi+'mm;margin:0 3mm;padding:2mm 0;font-family:Arial,Helvetica,sans-serif;font-size:10px;color:#000}'+
+      '.r{text-align:right}'+
+      '.head{display:flex;align-items:center;gap:2mm}'+
+      '.head img{height:11mm;width:auto;filter:grayscale(1) contrast(1.5)}'+
+      '.firm{font-weight:bold;font-size:11px;line-height:1.2}'+
+      '.judul{font-weight:bold;font-size:10px;margin-top:1px}'+
+      '.garis{border-top:1px dashed #000;margin:3px 0}'+
+      'table{width:100%;border-collapse:collapse}'+
+      '.info td{padding:1px 0;vertical-align:top}'+
+      'table.items th{border-top:1px solid #000;border-bottom:1px solid #000;padding:2px;text-align:left}'+
+      'table.items th.r{text-align:right}'+
+      'table.items td{padding:2px;border-bottom:1px dotted #000}'+
+      '.tot td{padding-top:4px;font-size:12px}'+
+      '.merah{color:#dc2626;font-weight:bold}'+
+      '</style></head><body>'+
+      '<div class="head"><img id="lg" src="'+LOGO_NOTA+'"><div><div class="firm">PT RAFASYA PUTRA USTANTO</div><div class="judul">NOTA PENJUALAN</div></div></div>'+
+      '<div class="garis"></div>'+
+      '<table class="info">'+
+      '<tr><td style="width:15mm">Tanggal</td><td>: '+esc(o.hari)+', '+esc(o.tanggal)+'</td></tr>'+
+      '<tr><td>Nama</td><td>: <b>'+esc(o.nama)+'</b></td></tr></table>'+
+      '<div class="garis"></div>'+
+      '<table class="items"><tr><th>Jenis</th><th class="r">Qty</th><th class="r">Harga</th><th class="r">Total</th></tr>'+
+      baris+
+      '<tr class="tot"><td colspan="3"><b>TOTAL</b></td><td class="r merah">'+rp(o.grandTotal)+'</td></tr></table>'+
+      '</body></html>';
+
+    var ifr = document.createElement('iframe');
+    ifr.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+    document.body.appendChild(ifr);
+    var doc = ifr.contentWindow.document;
+    doc.open(); doc.write(html); doc.close();
+
+    var sudah = false;
+    function cetak(){
+      if(sudah) return; sudah = true;
+      try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }
+      catch(e){ toast('Gagal membuka dialog cetak: '+e.message,'err'); }
+      setTimeout(function(){ if(ifr.parentNode) ifr.parentNode.removeChild(ifr); }, 60000);
+    }
+    var img = doc.getElementById('lg');
+    if(img && !img.complete){ img.onload = cetak; img.onerror = cetak; setTimeout(cetak, 2000); }
+    else { setTimeout(cetak, 150); }
+  }
+
+  function simpanDanCetak(mode){
+    var nama = document.getElementById('nama').value.trim();
+    if(!nama){ toast('Nama wajib diisi','err'); document.getElementById('nama').focus(); return; }
+    var bt = num('besarQty')*harga('besarHarga'), kt = num('kecilQty')*harga('kecilHarga');
+    if(bt+kt<=0){ toast('Isi Qty dan harga minimal satu jenis telur','err'); return; }
+
+    var data = {
+      tanggal: document.getElementById('tanggal').value,
+      nama: nama,
+      satuan: 'Kg',
+      besarQty: num('besarQty'), besarHarga: harga('besarHarga'),
+      kecilQty: num('kecilQty'), kecilHarga: harga('kecilHarga')
+    };
+    setBusy(true);
+
+    panggil('simpanNota', [data]).then(function(nota){
+      if(mode === 'thermal'){
+        setBusy(false);
+        cetakThermal(nota);
+        toast('Nota '+nota.noNota+' tersimpan, mengirim ke printer','ok');
+        reset();
+        return;
+      }
+      return panggil('buatPdf', [nota.noNota]).then(function(hasil){
+        setBusy(false);
+        unduhPdf(hasil);
+        toast('Nota '+nota.noNota+' tersimpan & PDF diunduh','ok');
+        reset();
+      }).catch(function(e){
+        setBusy(false);
+        toast('Nota tersimpan ('+nota.noNota+'), tetapi PDF gagal dibuat: '+(e.message||''),'err');
+      });
+    }).catch(function(e){
+      setBusy(false);
+      toast(e.message||'Gagal menyimpan','err');
+    });
+  }
+
+  function cetakUlangThermal(el){
+    var o = (window.REKAP||{})[el.getAttribute('data-no')];
+    if(o) cetakThermal(o);
+  }
+
+  function muatRekap(){
+    var tb = document.getElementById('isiRekap');
+    tb.innerHTML = '<tr><td colspan="7" class="kosong">Memuat...</td></tr>';
+    panggil('getRekap', [document.getElementById('dari').value, document.getElementById('sampai').value])
+      .then(function(res){
+        var f = document.getElementById('footRekap');
+        if(!res.rows.length){
+          tb.innerHTML = '<tr><td colspan="7" class="kosong">Belum ada data nota</td></tr>';
+          f.innerHTML = ''; return;
+        }
+        window.REKAP = {};
+        res.rows.forEach(function(r){ window.REKAP[r.noNota] = r; });
+        tb.innerHTML = res.rows.map(function(r){
+          return '<tr>'+
+            '<td>'+esc(r.noNota)+'</td>'+
+            '<td>'+esc(r.hari)+', '+esc(r.tanggal)+'</td>'+
+            '<td>'+esc(r.nama)+'</td>'+
+            '<td class="r">'+(r.besarQty?qty(r.besarQty)+' '+esc(r.satuan)+'<br><small>'+rp(r.besarTotal)+'</small>':'-')+'</td>'+
+            '<td class="r">'+(r.kecilQty?qty(r.kecilQty)+' '+esc(r.satuan)+'<br><small>'+rp(r.kecilTotal)+'</small>':'-')+'</td>'+
+            '<td class="r"><b>'+rp(r.grandTotal)+'</b></td>'+
+            '<td><button class="kecil-btn" data-no="'+esc(r.noNota)+'" onclick="cetakUlangThermal(this)">Cetak</button>'+
+            '<button class="kecil-btn" style="background:#475569" data-no="'+esc(r.noNota)+'" onclick="cetakUlang(this)">PDF</button>'+
+            '<button class="kecil-btn hapus" data-no="'+esc(r.noNota)+'" onclick="hapus(this)">Hapus</button></td>'+
+            '</tr>';
+        }).join('');
+        f.innerHTML = '<tr><td colspan="5" class="r">TOTAL ('+res.rows.length+' nota)</td><td class="r">'+rp(res.total)+'</td><td></td></tr>';
+      })
+      .catch(function(e){
+        tb.innerHTML='<tr><td colspan="7" class="kosong">'+esc(e.message||'Gagal memuat')+'</td></tr>';
+      });
+  }
+
+  function cetakUlang(el){
+    var no = el.getAttribute('data-no');
+    el.disabled = true; var asli = el.textContent; el.textContent = '...';
+    panggil('buatPdf', [no])
+      .then(function(h){ el.disabled=false; el.textContent=asli; unduhPdf(h); toast('PDF diunduh','ok'); })
+      .catch(function(e){ el.disabled=false; el.textContent=asli; toast(e.message||'Gagal membuat PDF','err'); });
+  }
+
+  function hapus(el){
+    var no = el.getAttribute('data-no');
+    if(!confirm('Hapus nota '+no+'? Tindakan ini tidak dapat dibatalkan.')) return;
+    panggil('hapusNota', [no])
+      .then(function(){ toast('Nota dihapus','ok'); muatRekap(); })
+      .catch(function(e){ toast(e.message||'Gagal menghapus','err'); });
+  }
+
+  /* ===== Pasang aplikasi (PWA) ===== */
+  var promptPasang = null;
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    promptPasang = e;
+    document.getElementById('btnPasang').style.display = 'block';
+  });
+  window.addEventListener('appinstalled', function(){
+    promptPasang = null;
+    document.getElementById('btnPasang').style.display = 'none';
+    toast('Aplikasi berhasil dipasang','ok');
+  });
+  function pasangAplikasi(){
+    if(!promptPasang) return;
+    promptPasang.prompt();
+    promptPasang.userChoice.then(function(){ promptPasang = null; document.getElementById('btnPasang').style.display='none'; });
+  }
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
+  // Inisialisasi
+  (function(){
+    document.getElementById('tanggal').value = hariIniLokal();
+    document.getElementById('metodeCetak').value = ambilMetode();
+    ubahTanggal(); hitung(); cekCleanter(); cekServer();
+    panggil('getInfoAwal').then(function(info){
+      document.getElementById('tanggal').value = info.tanggal;
+      document.getElementById('hari').value = info.hari;
+    }).catch(function(){});
+  })();
 </script>
 </body>
 </html>

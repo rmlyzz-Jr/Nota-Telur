@@ -1,8 +1,7 @@
-// Service worker: cache cangkang aplikasi (logo, ikon, halaman pembungkus).
-// Aplikasi Apps Script tetap dimuat online.
+/* Service worker: cache cangkang aplikasi agar bisa dibuka cepat & ter-install.
+   Data nota (Apps Script) selalu diambil dari jaringan. */
 var CACHE = 'nota-rpu-v1';
-var ASET = ['./', './index.html', './manifest.webmanifest',
-  './icons/icon-192.png', './icons/icon-512.png', './icons/logo.png'];
+var ASET = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(ASET); }));
@@ -18,14 +17,14 @@ self.addEventListener('activate', function (e) {
 });
 
 self.addEventListener('fetch', function (e) {
-  if (e.request.method !== 'GET') return;
-  var url = new URL(e.request.url);
-  if (url.origin !== location.origin) return; // Apps Script: langsung ke jaringan
+  var req = e.request;
+  if (req.method !== 'GET') return;
+  if (new URL(req.url).origin !== location.origin) return; // API & logo: langsung jaringan
   e.respondWith(
-    fetch(e.request).then(function (res) {
+    fetch(req).then(function (res) {
       var salin = res.clone();
-      caches.open(CACHE).then(function (c) { c.put(e.request, salin); });
+      caches.open(CACHE).then(function (c) { c.put(req, salin); });
       return res;
-    }).catch(function () { return caches.match(e.request); })
+    }).catch(function () { return caches.match(req).then(function (r) { return r || caches.match('./index.html'); }); })
   );
 });

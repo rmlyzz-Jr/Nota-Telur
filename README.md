@@ -1,20 +1,18 @@
-# Nota RPU – PT Rafasya Putra Ustanto
+# Nota RPU - Versi GitHub (PWA)
 
-Aplikasi web (PWA) yang bisa diinstal di HP/laptop. Isinya membuka web app
-Google Apps Script "Aplikasi Cetak Nota Telur".
+Isi folder: index.html, manifest.json, sw.js, icons/, Code.gs
 
-## Cara pasang di GitHub Pages
-1. Buat repository baru di GitHub (mis. `nota-rpu`), Public.
-2. Upload semua isi folder ini (index.html, sw.js, manifest.webmanifest, folder icons).
-3. Settings → Pages → Source: `Deploy from a branch` → Branch `main` / folder `/ (root)` → Save.
-4. Tunggu 1–2 menit, buka `https://USERNAME.github.io/nota-rpu/`.
+## 1. Update Apps Script (WAJIB, sekali saja)
+1. Buka Apps Script proyek Nota > ganti isi Code.gs dengan Code.gs di folder ini > Save.
+2. Deploy > Manage deployments > ikon pensil > Version: New version > Deploy.
+   (Execute as: Me, Who has access: Anyone. URL /exec tetap sama.)
 
-## Cara instal
-- **Android (Chrome):** menu ⋮ → *Instal aplikasi* / *Tambahkan ke layar utama*.
-- **iPhone (Safari):** Bagikan → *Tambah ke Layar Utama*.
-- **Laptop (Chrome/Edge):** ikon instal di sebelah kanan address bar.
+## 2. Upload ke GitHub
+1. Buat repository baru (mis. nota-rpu), Public.
+2. Upload SEMUA file & folder icons (index.html, manifest.json, sw.js, icons/).
+3. Settings > Pages > Source: Deploy from a branch > Branch: main, folder: / (root) > Save.
+4. Tunggu 1-2 menit. Alamat: https://USERNAME.github.io/nota-rpu/
 
-## Ganti URL Apps Script
-Cari `script.google.com/macros/s/...` di `index.html` (2 tempat) dan ganti.
-Setiap kali deploy ulang Apps Script dengan "New deployment", URL berubah;
-kalau memakai "Manage deployments → Edit → New version", URL tetap.
+## 3. Pasang di HP
+Android (Chrome): buka alamat di atas > tombol "Pasang" di header, atau menu titik tiga > Install app / Tambahkan ke layar utama.
+iPhone (Safari): Bagikan > Tambah ke Layar Utama.
