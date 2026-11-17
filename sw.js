@@ -1,6 +1,6 @@
 /* Service worker: cache cangkang aplikasi agar bisa dibuka cepat & ter-install.
    Data nota (Apps Script) selalu diambil dari jaringan. */
-var CACHE = 'nota-rpu-v2';
+var CACHE = 'nota-rpu-v2.1';
 var ASET = ['./', './index.html', './manifest.json', './icons/icon-192.png', './icons/icon-512.png'];
 
 self.addEventListener('install', function (e) {
