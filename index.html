@@ -268,7 +268,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbxM-jJCV0435amN2BYUyrqZXNNcDcy2nC7HsB4YtQiX3IlKdsOvvXVcp6ZJ-pXIBF73XQ/exec;'
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxM-jJCV0435amN2BYUyrqZXNNcDcy2nC7HsB4YtQiX3IlKdsOvvXVcp6ZJ-pXIBF73XQ/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -670,15 +670,15 @@
           return;
         }
         panggil('buatPdf', [nota.noNota])
-      .then(function(hasil){
+          .then(function(hasil){
             setBusy(false);
             unduhPdf(hasil);
             toast('Nota '+nota.noNota+' tersimpan & PDF diunduh','ok');
             reset();
           },
-        function(e){ setBusy(false); toast('Nota tersimpan ('+nota.noNota+'), tetapi PDF gagal dibuat: '+(e.message||''),'err'); });
+          function(e){ setBusy(false); toast('Nota tersimpan ('+nota.noNota+'), tetapi PDF gagal dibuat: '+(e.message||''),'err'); });
       },
-        function(e){ setBusy(false); toast(e.message||'Gagal menyimpan','err'); });
+      function(e){ setBusy(false); toast(e.message||'Gagal menyimpan','err'); });
   }
 
   function cetakUlangThermal(el){
@@ -719,7 +719,7 @@
         }).join('');
         f.innerHTML = '<tr><td colspan="5" class="r">TOTAL ('+res.rows.length+' nota)</td><td class="r">'+rp(res.total)+'</td><td></td></tr>';
       },
-        function(e){ tb.innerHTML='<tr><td colspan="7" class="kosong">'+esc(e.message||'Gagal memuat')+'</td></tr>'; });
+      function(e){ tb.innerHTML='<tr><td colspan="7" class="kosong">'+esc(e.message||'Gagal memuat')+'</td></tr>'; });
   }
 
   function cetakUlang(el){
@@ -850,7 +850,7 @@
         toast('Nota '+nota.noNota+' tersimpan, mengirim ke printer','ok');
         resetIkan();
       },
-        function(e){ setBusy(false); toast(e.message||'Gagal menyimpan nota ikan','err'); });
+      function(e){ setBusy(false); toast(e.message||'Gagal menyimpan nota ikan','err'); });
   }
 
   /* ===== Rekap Telur / Ikan ===== */
@@ -895,7 +895,7 @@
         }).join('');
         f.innerHTML = '<tr><td colspan="4" class="r">TOTAL ('+res.rows.length+' nota)</td><td class="r">'+rp(res.total)+'</td><td></td></tr>';
       },
-        function(e){ tb.innerHTML='<tr><td colspan="6" class="kosong">'+esc(e.message||'Gagal memuat')+'</td></tr>'; });
+      function(e){ tb.innerHTML='<tr><td colspan="6" class="kosong">'+esc(e.message||'Gagal memuat')+'</td></tr>'; });
   }
 
   function cetakUlangIkan(el){
@@ -978,7 +978,7 @@
         document.getElementById('pgNama').value = ''; document.getElementById('pgHarga').value = '';
         toast('Data ikan tersimpan','ok');
       },
-        function(e){ toast(e.message||'Gagal menyimpan','err'); });
+      function(e){ toast(e.message||'Gagal menyimpan','err'); });
   }
 
   /* Ubah nama / harga -> tersimpan otomatis ke sheet "Data Ikan" */
@@ -995,7 +995,7 @@
         urutIkan(); renderDatalist();
         toast('Tersimpan: '+item.nama+' Rp '+angka(item.harga),'ok');
       },
-        function(e){ toast(e.message||'Gagal menyimpan','err'); muatPengaturan(); });
+      function(e){ toast(e.message||'Gagal menyimpan','err'); muatPengaturan(); });
   }
 
   function hapusDataIkan(el){
@@ -1006,7 +1006,7 @@
         DATA_IKAN = DATA_IKAN.filter(function(d){ return d.nama !== nama; });
         renderPengaturan(); renderDatalist(); toast('Data ikan dihapus','ok');
       },
-        function(e){ toast(e.message||'Gagal menghapus','err'); });
+      function(e){ toast(e.message||'Gagal menghapus','err'); });
   }
 
   /* ===== Pasang aplikasi (PWA) ===== */
@@ -1041,9 +1041,9 @@
     ubahTanggal(); hitung(); cekCleanter(); cekServer();
     panggil('getInfoAwal', [])
       .then(function(info){
-      document.getElementById('tanggal').value = info.tanggal;
-      document.getElementById('hari').value = info.hari;
-    });
+        document.getElementById('tanggal').value = info.tanggal;
+        document.getElementById('hari').value = info.hari;
+      }, function(){});
   })();
 </script>
 </body>
