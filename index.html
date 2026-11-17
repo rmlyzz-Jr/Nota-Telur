@@ -268,7 +268,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbxMaIkIDQZ2j6YGxCoCBolpdaAfS5oZIM5ox2YFMgIbyruTenL6qFr_jhKpZcCDsAduvg/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwYsOB0IMTqdKmCwl0HyJYFT-WEJ4jqb-pX3-fVwV4fJlnj8X4b3iuCHEx9GB4187WZIA/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -451,7 +451,7 @@
     c.push({type:'divider'});
     itemNota(o).forEach(function(it){
       c.push({type:'text', text:ascii(it.judul)});
-      c.push({type:'row', left:qty(it.qty) + ' Kg x ' + angka(it.harga), right:angka(it.total)});
+      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total)});
     });
     c.push({type:'divider'});
     if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
@@ -539,7 +539,7 @@
     itemNota(o).forEach(function(it){
       var k = String(it.kode);
       if(k.length > 8){ t(k.substring(0,W)+'\n'); k = ''; }
-      baris(k, qty(it.qty)+' Kg', angka(it.harga), angka(it.total));
+      baris(k, qty(it.qty), angka(it.harga), angka(it.total));
     });
     garis();
     cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);// tebal + tinggi 2x
@@ -590,7 +590,7 @@
     var isi = lebar - 6;
     var baris = '';
     itemNota(o).forEach(function(it){
-      baris += '<tr><td>'+esc(it.kode)+'</td><td class="r">'+qty(it.qty)+' Kg</td><td class="r">'+angka(it.harga)+'</td><td class="r">'+angka(it.total)+'</td></tr>';
+      baris += '<tr><td>'+esc(it.kode)+'</td><td class="r">'+qty(it.qty)+'</td><td class="r">'+angka(it.harga)+'</td><td class="r">'+angka(it.total)+'</td></tr>';
     });
 
     var html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota</title><style>'+
