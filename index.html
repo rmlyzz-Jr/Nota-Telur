@@ -25,7 +25,7 @@
   .tabs{display:flex;background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
   .tab{flex:1;padding:13px;text-align:center;font-weight:600;color:var(--redup);cursor:pointer;border:0;background:none;font-size:15px;border-bottom:3px solid transparent}
   .tab.aktif{color:var(--biru);border-bottom-color:var(--biru)}
-  main{max-width:760px;margin:0 auto;padding:16px;padding-bottom:90px}
+  main{max-width:760px;margin:0 auto;padding:16px 16px 260px} /* ruang bawah supaya dropdown tidak tertutup keyboard */
   .kartu{background:var(--kartu);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
   .kartu h3{margin:0 0 12px;font-size:14px;color:var(--biru);text-transform:uppercase;letter-spacing:.04em}
   label{display:block;font-size:13px;font-weight:600;margin-bottom:5px}
@@ -33,6 +33,7 @@
   input:focus,select:focus{outline:2px solid var(--biru2);border-color:var(--biru2)}
   input[readonly]{background:#f8fafc;color:var(--redup)}
   .baris{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+  .baris3{display:grid;gap:12px;grid-template-columns:1fr 1fr 1fr}
   .full{grid-column:1/-1}
   .total-box{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding:10px 12px;background:#eef2ff;border-radius:8px;font-weight:600}
   .grand{background:var(--biru);color:#fff;border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
@@ -56,15 +57,16 @@
   .status-printer.warn{color:var(--peringatan)}
   .status-printer.err{color:var(--bahaya)}
   #statusServer{font-size:12px;margin-top:6px;color:var(--redup)}
-  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:20;max-width:90%}
+  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:40;max-width:90%}
   #toast.tampil{opacity:1}
   #toast.err{background:var(--bahaya)}
   #toast.ok{background:var(--ok)}
   .hidden{display:none}
-  .rk{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr) minmax(0,1fr) 44px;gap:6px;align-items:center}
+  .rk{position:relative;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr) minmax(0,1fr) 44px;gap:6px;align-items:center}
   .rk-head{font-size:12px;font-weight:600;color:var(--redup);margin-bottom:4px}
   .item-ikan{margin-bottom:8px}
   .item-ikan input{padding:10px 8px;font-size:16px;min-width:0}
+  .ik-jenis{scroll-margin-top:70px}
   .ik-aksi{width:44px;height:44px;border:0;border-radius:10px;font-size:26px;font-weight:700;line-height:1;color:#fff;cursor:pointer;padding:0}
   .ik-aksi.tambah{background:var(--biru2)}
   .ik-aksi.hapus{background:var(--bahaya)}
@@ -74,7 +76,12 @@
   .sub{display:flex;gap:8px;margin-bottom:14px}
   .sub button{flex:1;padding:11px;border:1px solid var(--garis);background:#fff;border-radius:10px;font-weight:700;font-size:14px;color:var(--redup);cursor:pointer}
   .sub button.aktif{background:var(--biru);color:#fff;border-color:var(--biru)}
-  @media(max-width:520px){.filter{grid-template-columns:1fr 1fr}.filter button{grid-column:1/-1}}
+  /* Dropdown saran nama ikan: menempel tepat di bawah field Jenis */
+  #saranIkan{display:none;position:absolute;left:0;right:50px;top:100%;margin-top:2px;z-index:30;background:#fff;border:1px solid var(--garis);border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  #saranIkan button{display:flex;justify-content:space-between;align-items:center;width:100%;border:0;border-bottom:1px solid #e2e8f0;background:#fff;padding:13px 14px;font-size:16px;text-align:left;color:var(--teks);cursor:pointer}
+  #saranIkan button:last-child{border-bottom:0}
+  #saranIkan button small{color:var(--redup);font-size:13px;margin-left:10px}
+  @media(max-width:520px){.baris3{grid-template-columns:1fr 1fr}.filter{grid-template-columns:1fr 1fr}.filter button{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -100,15 +107,17 @@
     <div class="sub">
       <button id="sub-telur" class="aktif" onclick="pilihJenis('telur')">Telur</button>
       <button id="sub-ikan" onclick="pilihJenis('ikan')">Ikan</button>
+      <button id="sub-cetak" onclick="pilihJenis('cetak')">Cetak</button>
     </div>
 
+    <!-- ===== FORM TELUR ===== -->
     <div id="form-telur">
     <div class="kartu">
       <h3>Data Nota</h3>
       <div class="baris">
         <div>
           <label for="tanggal">Tanggal</label>
-          <input type="date" id="tanggal" onchange="ubahTanggal()">
+          <input type="date" id="tanggal" onchange="ubahTanggal('')">
         </div>
         <div>
           <label for="hari">Hari</label>
@@ -126,11 +135,11 @@
       <div class="baris">
         <div>
           <label for="besarQty">Qty</label>
-          <input type="number" id="besarQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung()">
+          <input type="number" id="besarQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung('')">
         </div>
         <div>
           <label for="besarHarga">Harga (Rp)</label>
-          <input type="text" id="besarHarga" inputmode="numeric" value="150.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung()">
+          <input type="text" id="besarHarga" inputmode="numeric" value="150.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung('')">
         </div>
       </div>
       <div class="total-box"><span>Total Telur Besar</span><span id="besarTotal">Rp 0</span></div>
@@ -141,11 +150,11 @@
       <div class="baris">
         <div>
           <label for="kecilQty">Qty</label>
-          <input type="number" id="kecilQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung()">
+          <input type="number" id="kecilQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung('')">
         </div>
         <div>
           <label for="kecilHarga">Harga (Rp)</label>
-          <input type="text" id="kecilHarga" inputmode="numeric" value="50.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung()">
+          <input type="text" id="kecilHarga" inputmode="numeric" value="50.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung('')">
         </div>
       </div>
       <div class="total-box"><span>Total Telur Kecil</span><span id="kecilTotal">Rp 0</span></div>
@@ -169,13 +178,65 @@
           </div>
         </div>
       </div>
-      <datalist id="dlIkan"></datalist>
       <div class="kartu">
         <h3>Jenis Ikan</h3>
         <div class="rk rk-head"><span>Jenis</span><span>Kg</span><span>Harga</span><span></span></div>
         <div id="daftarIkan"></div>
       </div>
       <div class="grand"><span>TOTAL</span><span id="totalIkan">Rp 0</span></div>
+    </div>
+
+    <!-- ===== FORM CETAK (inputan sama seperti Telur) ===== -->
+    <div id="form-cetak" class="hidden">
+    <div class="kartu">
+      <h3>Data Nota Cetak</h3>
+      <div class="baris">
+        <div>
+          <label for="c_tanggal">Tanggal</label>
+          <input type="date" id="c_tanggal" onchange="ubahTanggal('c_')">
+        </div>
+        <div>
+          <label for="c_hari">Hari</label>
+          <input type="text" id="c_hari" readonly>
+        </div>
+        <div class="full">
+          <label for="c_nama">Nama</label>
+          <input type="text" id="c_nama" placeholder="Nama pembeli / toko" autocomplete="off">
+        </div>
+      </div>
+    </div>
+
+    <div class="kartu">
+      <h3>Cetak Besar</h3>
+      <div class="baris">
+        <div>
+          <label for="c_besarQty">Qty</label>
+          <input type="number" id="c_besarQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung('c_')">
+        </div>
+        <div>
+          <label for="c_besarHarga">Harga (Rp)</label>
+          <input type="text" id="c_besarHarga" inputmode="numeric" value="150.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung('c_')">
+        </div>
+      </div>
+      <div class="total-box"><span>Total Cetak Besar</span><span id="c_besarTotal">Rp 0</span></div>
+    </div>
+
+    <div class="kartu">
+      <h3>Cetak Kecil</h3>
+      <div class="baris">
+        <div>
+          <label for="c_kecilQty">Qty</label>
+          <input type="number" id="c_kecilQty" inputmode="decimal" min="0" step="any" placeholder="0" oninput="hitung('c_')">
+        </div>
+        <div>
+          <label for="c_kecilHarga">Harga (Rp)</label>
+          <input type="text" id="c_kecilHarga" inputmode="numeric" value="50.000" placeholder="0" autocomplete="off" oninput="formatHarga(this);hitung('c_')">
+        </div>
+      </div>
+      <div class="total-box"><span>Total Cetak Kecil</span><span id="c_kecilTotal">Rp 0</span></div>
+    </div>
+
+    <div class="grand"><span>GRAND TOTAL</span><span id="c_grandTotal">Rp 0</span></div>
     </div>
 
     <div class="kartu">
@@ -201,6 +262,7 @@
     <div class="sub">
       <button id="sub-rtelur" class="aktif" onclick="pilihRekap('telur')">Telur</button>
       <button id="sub-rikan" onclick="pilihRekap('ikan')">Ikan</button>
+      <button id="sub-rcetak" onclick="pilihRekap('cetak')">Cetak</button>
     </div>
     <div class="kartu">
       <h3>Filter Tanggal</h3>
@@ -234,22 +296,78 @@
         <tfoot id="footRekapIkan"></tfoot>
       </table>
     </div>
+    <div id="rekap-cetak" class="kartu tabel-wrap hidden">
+      <table>
+        <thead>
+          <tr>
+            <th>No Nota</th><th>Tanggal</th><th>Nama</th>
+            <th class="r">Besar</th><th class="r">Kecil</th><th class="r">Grand Total</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="isiRekapC"><tr><td colspan="7" class="kosong">Memuat...</td></tr></tbody>
+        <tfoot id="footRekapC"></tfoot>
+      </table>
+    </div>
   </section>
 
   <!-- ===== TAB PENGATURAN ===== -->
   <section id="panel-pengaturan" class="hidden">
-    <div class="kartu">
-      <h3>Tambah Data Ikan</h3>
-      <div class="pg" style="grid-template-columns:1fr 120px">
-        <input type="text" id="pgNama" placeholder="Nama ikan" autocomplete="off">
-        <input type="text" id="pgHarga" inputmode="numeric" placeholder="Harga" autocomplete="off" oninput="formatHarga(this)">
-      </div>
-      <button class="btn" style="width:100%;margin-top:4px" onclick="tambahDataIkan()">Tambah</button>
+    <div class="sub">
+      <button id="sub-pikan" class="aktif" onclick="pilihPengaturan('ikan')">Ikan</button>
+      <button id="sub-ptelur" onclick="pilihPengaturan('telur')">Telur</button>
+      <button id="sub-pcetak" onclick="pilihPengaturan('cetak')">Cetak</button>
     </div>
-    <div class="kartu">
-      <h3>Data Ikan (Nama &amp; Harga per Kg)</h3>
-      <div id="daftarPengaturan"><div class="kosong">Memuat...</div></div>
-      <div class="status-printer">Perubahan nama atau harga tersimpan otomatis dan dipakai di Input Ikan.</div>
+
+    <div id="pg-ikan">
+      <div class="kartu">
+        <h3>Tambah Data Ikan</h3>
+        <div class="pg" style="grid-template-columns:1fr 120px">
+          <input type="text" id="pgNama" placeholder="Nama ikan" autocomplete="off">
+          <input type="text" id="pgHarga" inputmode="numeric" placeholder="Harga" autocomplete="off" oninput="formatHarga(this)">
+        </div>
+        <button class="btn" style="width:100%;margin-top:4px" onclick="tambahDataIkan()">Tambah</button>
+      </div>
+      <div class="kartu">
+        <h3>Data Ikan (Nama &amp; Harga per Kg)</h3>
+        <div id="daftarPengaturan"><div class="kosong">Memuat...</div></div>
+        <div class="status-printer">Perubahan nama atau harga tersimpan otomatis dan dipakai di Input Ikan.</div>
+      </div>
+    </div>
+
+    <div id="pg-telur" class="hidden">
+      <div class="kartu">
+        <h3>Harga Default Telur</h3>
+        <div class="baris">
+          <div>
+            <label for="hb_telur">Harga Besar (Rp)</label>
+            <input type="text" id="hb_telur" inputmode="numeric" placeholder="0" autocomplete="off" oninput="formatHarga(this)">
+          </div>
+          <div>
+            <label for="hk_telur">Harga Kecil (Rp)</label>
+            <input type="text" id="hk_telur" inputmode="numeric" placeholder="0" autocomplete="off" oninput="formatHarga(this)">
+          </div>
+        </div>
+        <button class="btn" style="width:100%;margin-top:12px" onclick="simpanHarga('telur')">Simpan</button>
+        <div class="status-printer">Harga ini terisi otomatis di Input Telur (tersimpan di sheet "Pengaturan Harga").</div>
+      </div>
+    </div>
+
+    <div id="pg-cetak" class="hidden">
+      <div class="kartu">
+        <h3>Harga Default Cetak</h3>
+        <div class="baris">
+          <div>
+            <label for="hb_cetak">Harga Besar (Rp)</label>
+            <input type="text" id="hb_cetak" inputmode="numeric" placeholder="0" autocomplete="off" oninput="formatHarga(this)">
+          </div>
+          <div>
+            <label for="hk_cetak">Harga Kecil (Rp)</label>
+            <input type="text" id="hk_cetak" inputmode="numeric" placeholder="0" autocomplete="off" oninput="formatHarga(this)">
+          </div>
+        </div>
+        <button class="btn" style="width:100%;margin-top:12px" onclick="simpanHarga('cetak')">Simpan</button>
+        <div class="status-printer">Harga ini terisi otomatis di Input Cetak (tersimpan di sheet "Pengaturan Harga").</div>
+      </div>
     </div>
   </section>
 </main>
@@ -260,6 +378,9 @@
   <button class="kecil-btn" style="background:#0f766e;padding:10px 14px;font-size:14px" onclick="cetakDialogTerakhir()">Dialog Cetak</button>
   <button class="kecil-btn" style="background:#475569;padding:10px 14px;font-size:14px" onclick="document.getElementById('barCetak').style.display='none'">Tutup</button>
 </div>
+
+<!-- Dropdown saran nama ikan (dipindah JS ke bawah field Jenis yang aktif) -->
+<div id="saranIkan"></div>
 
 <div id="toast"></div>
 
@@ -282,6 +403,11 @@
   var CLEANTER_URL    = 'http://localhost:9100';
   var CLEANTER_KERTAS = 80;        // 80 (48 karakter) atau 58 (32 karakter)
   var CLEANTER_JUDUL  = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama PT & total (large hanya untuk kertas 80 mm)
+  var CLEANTER_NAMA   = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama pembeli
+  var CLEANTER_JENIS  = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama jenis ikan/telur (ubah ke 'normal' bila terlalu besar)
+
+  /* Harga default Besar/Kecil (diambil dari sheet "Pengaturan Harga") */
+  var HARGA_DEF = { telur: {besar: 150000, kecil: 50000}, cetak: {besar: 150000, kecil: 50000} };
 
   /* ===== Panggilan ke Apps Script (pengganti google.script.run) ===== */
   function panggil(fn, args){
@@ -306,6 +432,15 @@
   function num(id){ var v = parseFloat(String(document.getElementById(id).value).replace(',','.')); return isNaN(v)||v<0?0:v; }
   function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function qty(n){ return String(Math.round(n*100)/100).replace('.',','); }
+
+  /* Tanggal pada nota: ikan = "Hari, dd/mm/yyyy"; telur & cetak tetap seperti semula */
+  function tglSlash(s){
+    var m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3]+'/'+m[2]+'/'+m[1] : String(s||'');
+  }
+  function teksTanggal(o){
+    return o.hari + ', ' + (o.tipe === 'ikan' ? tglSlash(o.tanggal) : o.tanggal);
+  }
 
   function toast(msg, tipe){
     var t = document.getElementById('toast');
@@ -334,8 +469,10 @@
     var m = ('0'+(d.getMonth()+1)).slice(-2), t = ('0'+d.getDate()).slice(-2);
     return d.getFullYear()+'-'+m+'-'+t;
   }
-  function ubahTanggal(){
-    document.getElementById('hari').value = hariDariTanggal(document.getElementById('tanggal').value);
+  /* p = '' (telur) atau 'c_' (cetak) */
+  function ubahTanggal(p){
+    p = p || '';
+    document.getElementById(p+'hari').value = hariDariTanggal(document.getElementById(p+'tanggal').value);
   }
 
   function harga(id){
@@ -347,20 +484,25 @@
     el.value = d ? d.replace(/\B(?=(\d{3})+(?!\d))/g,'.') : '';
   }
 
-  function hitung(){
-    var bt = num('besarQty')*harga('besarHarga');
-    var kt = num('kecilQty')*harga('kecilHarga');
-    document.getElementById('besarTotal').textContent = rp(bt);
-    document.getElementById('kecilTotal').textContent = rp(kt);
-    document.getElementById('grandTotal').textContent = rp(bt+kt);
+  function hitung(p){
+    p = p || '';
+    var bt = num(p+'besarQty')*harga(p+'besarHarga');
+    var kt = num(p+'kecilQty')*harga(p+'kecilHarga');
+    document.getElementById(p+'besarTotal').textContent = rp(bt);
+    document.getElementById(p+'kecilTotal').textContent = rp(kt);
+    document.getElementById(p+'grandTotal').textContent = rp(bt+kt);
   }
 
-  function reset(){
-    ['nama','besarQty','kecilQty'].forEach(function(id){ document.getElementById(id).value=''; });
-    document.getElementById('besarHarga').value = '150.000';
-    document.getElementById('kecilHarga').value = '50.000';
-    document.getElementById('tanggal').value = hariIniLokal();
-    ubahTanggal(); hitung();
+  function jenisDariPrefix(p){ return p === 'c_' ? 'cetak' : 'telur'; }
+
+  function reset(p){
+    p = p || '';
+    var h = HARGA_DEF[jenisDariPrefix(p)];
+    [p+'nama', p+'besarQty', p+'kecilQty'].forEach(function(id){ document.getElementById(id).value=''; });
+    document.getElementById(p+'besarHarga').value = angka(h.besar);
+    document.getElementById(p+'kecilHarga').value = angka(h.kecil);
+    document.getElementById(p+'tanggal').value = hariIniLokal();
+    ubahTanggal(p); hitung(p);
   }
 
   function unduhPdf(hasil){
@@ -446,11 +588,11 @@
     c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
     c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
     c.push({type:'divider'});
-    c.push({type:'row', left:'Tanggal', right:ascii(o.hari) + ', ' + ascii(o.tanggal)});
-    c.push({type:'text', text:'Nama: ' + ascii(o.nama)});
+    c.push({type:'row', left:'Tanggal', right:ascii(teksTanggal(o))});
+    c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:CLEANTER_NAMA});
     c.push({type:'divider'});
     itemNota(o).forEach(function(it){
-      c.push({type:'text', text:ascii(it.judul)});
+      c.push({type:'text', text:ascii(it.judul), bold:true, size:CLEANTER_JENIS});
       c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total)});
     });
     c.push({type:'divider'});
@@ -521,7 +663,6 @@
       var sisa = val.substring(lv);
       while(sisa.length){ t(new Array(pre.length+1).join(' ')+sisa.substring(0,lv)+'\n'); sisa = sisa.substring(lv); }
     }
-    function baris(j,q,h,tt){ t(pr(j,8)+pl(q,10)+pl(h,14)+pl(tt,16)+'\n'); }
 
     cmd(0x1B,0x40);                       // reset printer
     cmd(0x1B,0x61,1);                     // rata tengah
@@ -531,15 +672,17 @@
     t('NOTA PENJUALAN\n');
     cmd(0x1B,0x61,0);                     // rata kiri
     garis();
-    info('Tanggal', o.hari + ', ' + o.tanggal);
-    info('Nama', o.nama);
-    garis();
-    baris('JENIS','QTY','HARGA','TOTAL');
+    info('Tanggal', teksTanggal(o));
+    cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);  // nama pembeli: tengah, tebal, tinggi 2x
+    var nm = String(o.nama);
+    do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
+    cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
     garis();
     itemNota(o).forEach(function(it){
-      var k = String(it.kode);
-      if(k.length > 8){ t(k.substring(0,W)+'\n'); k = ''; }
-      baris(k, qty(it.qty), angka(it.harga), angka(it.total));
+      cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);                  // jenis: tebal + tinggi 2x
+      t(String(it.judul).substring(0,W)+'\n');
+      cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0);
+      t(pr(qty(it.qty)+' x '+angka(it.harga), W-16)+pl(angka(it.total),16)+'\n');
     });
     garis();
     cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);// tebal + tinggi 2x
@@ -610,13 +753,15 @@
       'table.items th.r{text-align:right}'+
       'table.items td{padding:2px;border-bottom:1px dotted #000}'+
       '.tot td{padding-top:4px;font-weight:bold;font-size:calc(var(--f) + 2px)}'+
+      '.nm{text-align:center;font-weight:bold;font-size:calc(var(--f) + 1px);margin:2px 0}'+
+      'table.items td:first-child{font-weight:bold;font-size:calc(var(--f) + 1px)}'+
       '.merah{color:#dc2626;font-weight:bold}'+
       '</style></head><body><div id="wrap">'+
       '<div class="head"><img id="lg" src="'+LOGO_NOTA+'"><div><div class="firm">PT RAFASYA PUTRA USTANTO</div><div class="judul">NOTA PENJUALAN</div></div></div>'+
       '<div class="garis"></div>'+
       '<table class="info">'+
-      '<tr><td style="width:15mm">Tanggal</td><td>: '+esc(o.hari)+', '+esc(o.tanggal)+'</td></tr>'+
-      '<tr><td>Nama</td><td>: '+esc(o.nama)+'</td></tr></table>'+
+      '<tr><td style="width:15mm">Tanggal</td><td>: '+esc(teksTanggal(o))+'</td></tr></table>'+
+      '<div class="nm">'+esc(o.nama)+'</div>'+
       '<div class="garis"></div>'+
       '<table class="items"><tr><th>Jenis</th><th class="r">Qty</th><th class="r">Harga</th><th class="r">Total</th></tr>'+
       baris+
@@ -645,44 +790,44 @@
     else { setTimeout(cetak, 150); }
   }
 
-  function simpanDanCetak(mode){
-    var nama = document.getElementById('nama').value.trim();
-    if(!nama){ toast('Nama wajib diisi','err'); document.getElementById('nama').focus(); return; }
-    var bt = num('besarQty')*harga('besarHarga'), kt = num('kecilQty')*harga('kecilHarga');
-    if(bt+kt<=0){ toast('Isi Qty dan harga minimal satu jenis telur','err'); return; }
+  /* Simpan nota Telur (p='') atau Cetak (p='c_') lalu cetak thermal */
+  function simpanDanCetak(p){
+    p = p || '';
+    var j = jenisDariPrefix(p);
+    var nama = document.getElementById(p+'nama').value.trim();
+    if(!nama){ toast('Nama wajib diisi','err'); document.getElementById(p+'nama').focus(); return; }
+    var bt = num(p+'besarQty')*harga(p+'besarHarga'), kt = num(p+'kecilQty')*harga(p+'kecilHarga');
+    if(bt+kt<=0){ toast('Isi Qty dan harga minimal satu jenis','err'); return; }
 
     var data = {
-      tanggal: document.getElementById('tanggal').value,
+      tanggal: document.getElementById(p+'tanggal').value,
       nama: nama,
       satuan: 'Kg',
-      besarQty: num('besarQty'), besarHarga: harga('besarHarga'),
-      kecilQty: num('kecilQty'), kecilHarga: harga('kecilHarga')
+      besarQty: num(p+'besarQty'), besarHarga: harga(p+'besarHarga'),
+      kecilQty: num(p+'kecilQty'), kecilHarga: harga(p+'kecilHarga')
     };
     setBusy(true);
 
-    panggil('simpanNota', [data])
+    panggil(j === 'cetak' ? 'simpanNotaCetak' : 'simpanNota', [data])
       .then(function(nota){
-        if(mode === 'thermal'){
-          setBusy(false);
-          cetakThermal(nota);
-          toast('Nota '+nota.noNota+' tersimpan, mengirim ke printer','ok');
-          reset();
-          return;
-        }
-        panggil('buatPdf', [nota.noNota])
-          .then(function(hasil){
-            setBusy(false);
-            unduhPdf(hasil);
-            toast('Nota '+nota.noNota+' tersimpan & PDF diunduh','ok');
-            reset();
-          },
-          function(e){ setBusy(false); toast('Nota tersimpan ('+nota.noNota+'), tetapi PDF gagal dibuat: '+(e.message||''),'err'); });
+        setBusy(false);
+        if(j === 'cetak') nota.tipe = 'cetak';
+        cetakThermal(nota);
+        toast('Nota '+nota.noNota+' tersimpan, mengirim ke printer','ok');
+        reset(p);
       },
       function(e){ setBusy(false); toast(e.message||'Gagal menyimpan','err'); });
   }
 
+  /* ===== Rekap Telur & Cetak (struktur sama, beda sheet) ===== */
+  window.REKAPJ = { telur: {}, cetak: {} };
+  var CFG_REKAP = {
+    telur: {tb:'isiRekap',  ft:'footRekap',  get:'getRekap',      del:'hapusNota',      pdf:'buatPdf',      kosong:'Tidak ada nota pada tanggal ini'},
+    cetak: {tb:'isiRekapC', ft:'footRekapC', get:'getRekapCetak', del:'hapusNotaCetak', pdf:'buatPdfCetak', kosong:'Tidak ada nota cetak pada tanggal ini'}
+  };
+
   function cetakUlangThermal(el){
-    var o = (window.REKAP||{})[el.getAttribute('data-no')];
+    var o = window.REKAPJ[el.getAttribute('data-j')][el.getAttribute('data-no')];
     if(o) cetakThermal(o);
   }
 
@@ -691,20 +836,22 @@
     if(!d.value && !s.value){ d.value = hariIniLokal(); s.value = hariIniLokal(); }
   }
 
-  function muatRekapTelur(){
-    var tb = document.getElementById('isiRekap');
+  function muatRekapBK(j){
+    var c = CFG_REKAP[j];
+    var tb = document.getElementById(c.tb), f = document.getElementById(c.ft);
     filterHariIni();
     tb.innerHTML = '<tr><td colspan="7" class="kosong">Memuat...</td></tr>';
-    panggil('getRekap', [document.getElementById('dari').value, document.getElementById('sampai').value])
+    f.innerHTML = '';
+    panggil(c.get, [document.getElementById('dari').value, document.getElementById('sampai').value])
       .then(function(res){
-        var f = document.getElementById('footRekap');
         if(!res.rows.length){
-          tb.innerHTML = '<tr><td colspan="7" class="kosong">Tidak ada nota pada tanggal ini</td></tr>';
+          tb.innerHTML = '<tr><td colspan="7" class="kosong">'+c.kosong+'</td></tr>';
           f.innerHTML = ''; return;
         }
-        window.REKAP = {};
-        res.rows.forEach(function(r){ window.REKAP[r.noNota] = r; });
+        window.REKAPJ[j] = {};
+        res.rows.forEach(function(r){ r.tipe = j; window.REKAPJ[j][r.noNota] = r; });
         tb.innerHTML = res.rows.map(function(r){
+          var attr = 'data-no="'+esc(r.noNota)+'" data-j="'+j+'"';
           return '<tr>'+
             '<td>'+esc(r.noNota)+'</td>'+
             '<td>'+esc(r.hari)+', '+esc(r.tanggal)+'</td>'+
@@ -712,9 +859,9 @@
             '<td class="r">'+(r.besarQty?qty(r.besarQty)+' '+esc(r.satuan)+'<br><small>'+rp(r.besarTotal)+'</small>':'-')+'</td>'+
             '<td class="r">'+(r.kecilQty?qty(r.kecilQty)+' '+esc(r.satuan)+'<br><small>'+rp(r.kecilTotal)+'</small>':'-')+'</td>'+
             '<td class="r"><b>'+rp(r.grandTotal)+'</b></td>'+
-            '<td><button class="kecil-btn" data-no="'+esc(r.noNota)+'" onclick="cetakUlangThermal(this)">Cetak</button>'+
-            '<button class="kecil-btn" style="background:#475569" data-no="'+esc(r.noNota)+'" onclick="cetakUlang(this)">PDF</button>'+
-            '<button class="kecil-btn hapus" data-no="'+esc(r.noNota)+'" onclick="hapus(this)">Hapus</button></td>'+
+            '<td><button class="kecil-btn" '+attr+' onclick="cetakUlangThermal(this)">Cetak</button>'+
+            '<button class="kecil-btn" style="background:#475569" '+attr+' onclick="cetakUlang(this)">PDF</button>'+
+            '<button class="kecil-btn hapus" '+attr+' onclick="hapus(this)">Hapus</button></td>'+
             '</tr>';
         }).join('');
         f.innerHTML = '<tr><td colspan="5" class="r">TOTAL ('+res.rows.length+' nota)</td><td class="r">'+rp(res.total)+'</td><td></td></tr>';
@@ -723,41 +870,50 @@
   }
 
   function cetakUlang(el){
-    var no = el.getAttribute('data-no');
+    var no = el.getAttribute('data-no'), c = CFG_REKAP[el.getAttribute('data-j')];
     el.disabled = true; var asli = el.textContent; el.textContent = '...';
-    panggil('buatPdf', [no])
+    panggil(c.pdf, [no])
       .then(function(h){ el.disabled=false; el.textContent=asli; unduhPdf(h); toast('PDF diunduh','ok'); },
         function(e){ el.disabled=false; el.textContent=asli; toast(e.message||'Gagal membuat PDF','err'); });
   }
 
   function hapus(el){
-    var no = el.getAttribute('data-no');
+    var no = el.getAttribute('data-no'), j = el.getAttribute('data-j'), c = CFG_REKAP[j];
     if(!confirm('Hapus nota '+no+'? Tindakan ini tidak dapat dibatalkan.')) return;
-    panggil('hapusNota', [no])
-      .then(function(){ toast('Nota dihapus','ok'); muatRekapTelur(); },
+    panggil(c.del, [no])
+      .then(function(){ toast('Nota dihapus','ok'); muatRekapBK(j); },
         function(e){ toast(e.message||'Gagal menghapus','err'); });
   }
 
-  /* ===== Daftar item nota (telur: besar/kecil, ikan: satu jenis) ===== */
+  /* ===== Daftar item nota (telur/cetak: besar/kecil, ikan: satu jenis) ===== */
   function itemNota(o){
     if(o.tipe === 'ikan') return (o.items||[]).map(function(it){ return {judul:it.jenis, kode:it.jenis, qty:it.qty, harga:it.harga, total:it.total}; });
+    var nm = o.tipe === 'cetak' ? 'Cetak' : 'Telur';
     var a = [];
-    if(o.besarQty > 0) a.push({judul:'Telur Besar', kode:'BESAR', qty:o.besarQty, harga:o.besarHarga, total:o.besarTotal});
-    if(o.kecilQty > 0) a.push({judul:'Telur Kecil', kode:'KECIL', qty:o.kecilQty, harga:o.kecilHarga, total:o.kecilTotal});
+    if(o.besarQty > 0) a.push({judul:nm+' Besar', kode:'BESAR', qty:o.besarQty, harga:o.besarHarga, total:o.besarTotal});
+    if(o.kecilQty > 0) a.push({judul:nm+' Kecil', kode:'KECIL', qty:o.kecilQty, harga:o.kecilHarga, total:o.kecilTotal});
     return a;
   }
 
-  /* ===== Pilihan Telur / Ikan di tab Input ===== */
+  /* ===== Pilihan Telur / Ikan / Cetak di tab Input ===== */
   var JENIS_AKTIF = 'telur';
   function pilihJenis(j){
     JENIS_AKTIF = j;
-    document.getElementById('form-telur').classList.toggle('hidden', j !== 'telur');
-    document.getElementById('form-ikan').classList.toggle('hidden', j !== 'ikan');
-    document.getElementById('sub-telur').classList.toggle('aktif', j === 'telur');
-    document.getElementById('sub-ikan').classList.toggle('aktif', j === 'ikan');
+    ['telur','ikan','cetak'].forEach(function(n){
+      document.getElementById('form-'+n).classList.toggle('hidden', n !== j);
+      document.getElementById('sub-'+n).classList.toggle('aktif', n === j);
+    });
   }
-  function resetAktif(){ if(JENIS_AKTIF === 'ikan') resetIkan(); else reset(); }
-  function cetakAktif(){ if(JENIS_AKTIF === 'ikan') cetakIkan(); else simpanDanCetak('thermal'); }
+  function resetAktif(){
+    if(JENIS_AKTIF === 'ikan') resetIkan();
+    else if(JENIS_AKTIF === 'cetak') reset('c_');
+    else reset('');
+  }
+  function cetakAktif(){
+    if(JENIS_AKTIF === 'ikan') cetakIkan();
+    else if(JENIS_AKTIF === 'cetak') simpanDanCetak('c_');
+    else simpanDanCetak('');
+  }
 
   /* ===== Nota Ikan (beberapa jenis ikan per transaksi) ===== */
   function barisIkan(){ return document.querySelectorAll('#daftarIkan .item-ikan'); }
@@ -778,7 +934,7 @@
     d.className = 'item-ikan';
     d.innerHTML =
       '<div class="rk">'+
-      '<input type="text" class="ik-jenis" list="dlIkan" placeholder="Nama ikan" autocomplete="off" oninput="pilihIkan(this)">'+
+      '<input type="text" class="ik-jenis" placeholder="Nama ikan" autocomplete="off" oninput="pilihIkan(this);tampilSaran(this)" onfocus="tampilSaran(this);gulirKeInput(this)" onblur="sembunyiSaran()">'+
       '<input type="number" class="ik-jumlah" inputmode="decimal" min="0" step="any" placeholder="Kg" oninput="hitungIkan()">'+
       '<input type="text" class="ik-harga" inputmode="numeric" placeholder="Harga" autocomplete="off" oninput="formatHarga(this);hitungIkan()">'+
       '<button type="button" class="ik-aksi tambah" onclick="aksiBarisIkan(this)">+</button>'+
@@ -789,6 +945,7 @@
   }
 
   function aksiBarisIkan(btn){
+    parkirSaran();
     var baris = btn.closest('.item-ikan'), r = barisIkan();
     if(baris === r[r.length - 1]){ tambahBarisIkan(true); return; }
     baris.parentNode.removeChild(baris);
@@ -818,6 +975,7 @@
   }
 
   function resetIkan(){
+    parkirSaran();
     document.getElementById('namaIkan').value = '';
     document.getElementById('daftarIkan').innerHTML = '';
     tambahBarisIkan();
@@ -853,22 +1011,25 @@
       function(e){ setBusy(false); toast(e.message||'Gagal menyimpan nota ikan','err'); });
   }
 
-  /* ===== Rekap Telur / Ikan ===== */
+  /* ===== Rekap Telur / Ikan / Cetak ===== */
   var REKAP_JENIS = 'telur';
   function pilihRekap(j){
     REKAP_JENIS = j;
-    document.getElementById('rekap-telur').classList.toggle('hidden', j !== 'telur');
-    document.getElementById('rekap-ikan').classList.toggle('hidden', j !== 'ikan');
-    document.getElementById('sub-rtelur').classList.toggle('aktif', j === 'telur');
-    document.getElementById('sub-rikan').classList.toggle('aktif', j === 'ikan');
+    ['telur','ikan','cetak'].forEach(function(n){
+      document.getElementById('rekap-'+n).classList.toggle('hidden', n !== j);
+      document.getElementById('sub-r'+n).classList.toggle('aktif', n === j);
+    });
     muatRekap();
   }
-  function muatRekap(){ if(REKAP_JENIS === 'ikan') muatRekapIkan(); else muatRekapTelur(); }
+  function muatRekap(){
+    if(REKAP_JENIS === 'ikan') muatRekapIkan();
+    else muatRekapBK(REKAP_JENIS);
+  }
 
   function muatRekapIkan(){
     var tb = document.getElementById('isiRekapIkan');
-    filterHariIni();
     var f = document.getElementById('footRekapIkan');
+    filterHariIni();
     tb.innerHTML = '<tr><td colspan="6" class="kosong">Memuat...</td></tr>';
     f.innerHTML = '';
     panggil('getRekapIkan', [document.getElementById('dari').value, document.getElementById('sampai').value])
@@ -916,11 +1077,63 @@
 
   function urutIkan(){ DATA_IKAN.sort(function(a,b){ return a.nama.toLowerCase() < b.nama.toLowerCase() ? -1 : 1; }); }
 
+  /* ===== Saran nama ikan: dropdown menempel di bawah field Jenis ===== */
+  var SARAN_EL = null;
+  var SARAN_P = document.getElementById('saranIkan');
+
+  /* Dipanggil setiap data ikan berubah: segarkan saran bila sedang terbuka */
   function renderDatalist(){
-    document.getElementById('dlIkan').innerHTML = DATA_IKAN.map(function(d){
-      return '<option value="'+esc(d.nama)+'">Rp '+angka(d.harga)+'</option>';
-    }).join('');
+    if(SARAN_EL && document.activeElement === SARAN_EL) tampilSaran(SARAN_EL);
   }
+
+  /* simpan dropdown kembali ke body (dipakai sebelum baris dihapus/direset) */
+  function parkirSaran(){
+    SARAN_P.style.display = 'none';
+    document.body.appendChild(SARAN_P);
+  }
+
+  function tampilSaran(el){
+    SARAN_EL = el;
+    var p = SARAN_P;
+    var q = el.value.trim().toLowerCase();
+    var cocok = DATA_IKAN.filter(function(d){ return !q || d.nama.toLowerCase().indexOf(q) >= 0; });
+    if(!cocok.length || (cocok.length === 1 && cocok[0].nama.toLowerCase() === q)){
+      p.style.display = 'none'; return;
+    }
+    p._list = cocok;
+    p.innerHTML = cocok.map(function(d,i){
+      return '<button type="button" data-i="'+i+'"><span>'+esc(d.nama)+'</span><small>'+angka(d.harga)+'</small></button>';
+    }).join('');
+    var rk = el.closest('.rk');
+    if(p.parentNode !== rk) rk.appendChild(p);   // menempel di bawah field
+    p.style.display = 'block';
+  }
+
+  function sembunyiSaran(){
+    setTimeout(function(){
+      var a = document.activeElement;
+      if(!a || String(a.className).indexOf('ik-jenis') < 0) parkirSaran();
+    }, 200);
+  }
+
+  function gulirKeInput(el){
+    setTimeout(function(){ try{ el.scrollIntoView({block:'start', behavior:'smooth'}); }catch(e){} }, 350);
+  }
+
+  (function(){
+    var p = SARAN_P;
+    p.addEventListener('mousedown', function(e){ e.preventDefault(); }); // jaga keyboard tetap terbuka
+    p.addEventListener('click', function(e){
+      var b = e.target.closest('button'); if(!b || !SARAN_EL) return;
+      var d = p._list[+b.getAttribute('data-i')]; if(!d) return;
+      var row = SARAN_EL.closest('.item-ikan');
+      SARAN_EL.value = d.nama;
+      row.querySelector('.ik-harga').value = angka(d.harga);
+      hitungIkan();
+      parkirSaran();
+      row.querySelector('.ik-jumlah').focus();   // lanjut isi Kg
+    });
+  })();
 
   function muatDataIkanDiam(){
     panggil('getDataIkan', [])
@@ -940,6 +1153,14 @@
     }
   }
 
+  /* ===== Pengaturan: sub-tab Ikan / Telur / Cetak ===== */
+  function pilihPengaturan(j){
+    ['ikan','telur','cetak'].forEach(function(n){
+      document.getElementById('pg-'+n).classList.toggle('hidden', n !== j);
+      document.getElementById('sub-p'+n).classList.toggle('aktif', n === j);
+    });
+  }
+
   function renderPengaturan(){
     var c = document.getElementById('daftarPengaturan');
     if(!DATA_IKAN.length){ c.innerHTML = '<div class="kosong">Belum ada data ikan</div>'; return; }
@@ -957,6 +1178,48 @@
     panggil('getDataIkan', [])
       .then(function(list){ DATA_IKAN = list || []; renderPengaturan(); renderDatalist(); },
         function(e){ document.getElementById('daftarPengaturan').innerHTML = '<div class="kosong">'+esc(e.message||'Gagal memuat')+'</div>'; });
+    muatHargaDef(false);
+  }
+
+  /* ===== Harga default Telur & Cetak (sheet "Pengaturan Harga") ===== */
+  function isiFieldHargaPengaturan(){
+    ['telur','cetak'].forEach(function(j){
+      document.getElementById('hb_'+j).value = angka(HARGA_DEF[j].besar);
+      document.getElementById('hk_'+j).value = angka(HARGA_DEF[j].kecil);
+    });
+  }
+
+  /* terapkan=true: harga di form Input ikut diganti ke harga default */
+  function muatHargaDef(terapkan){
+    panggil('getHargaDefault', [])
+      .then(function(h){
+        if(h && h.telur && h.cetak) HARGA_DEF = h;
+        isiFieldHargaPengaturan();
+        if(terapkan){
+          ['','c_'].forEach(function(p){
+            var d = HARGA_DEF[jenisDariPrefix(p)];
+            document.getElementById(p+'besarHarga').value = angka(d.besar);
+            document.getElementById(p+'kecilHarga').value = angka(d.kecil);
+            hitung(p);
+          });
+        }
+      }, function(){});
+  }
+
+  function simpanHarga(j){
+    var b = angkaDari(document.getElementById('hb_'+j).value);
+    var k = angkaDari(document.getElementById('hk_'+j).value);
+    if(b <= 0 || k <= 0){ toast('Harga Besar dan Kecil wajib diisi','err'); return; }
+    panggil('simpanHargaDefault', [{jenis: j, besar: b, kecil: k}])
+      .then(function(r){
+        HARGA_DEF[j] = {besar: r.besar, kecil: r.kecil};
+        var p = j === 'cetak' ? 'c_' : '';
+        document.getElementById(p+'besarHarga').value = angka(r.besar);
+        document.getElementById(p+'kecilHarga').value = angka(r.kecil);
+        hitung(p);
+        toast('Harga default '+(j === 'cetak' ? 'Cetak' : 'Telur')+' tersimpan','ok');
+      },
+      function(e){ toast(e.message||'Gagal menyimpan','err'); });
   }
 
   function angkaDari(str){ var v = parseInt(String(str).replace(/\./g,''), 10); return isNaN(v) || v < 0 ? 0 : v; }
@@ -1036,13 +1299,17 @@
   // Inisialisasi
   (function(){
     document.getElementById('tanggal').value = hariIniLokal();
+    document.getElementById('c_tanggal').value = hariIniLokal();
     document.getElementById('metodeCetak').value = ambilMetode();
     resetIkan(); muatDataIkanDiam();
-    ubahTanggal(); hitung(); cekCleanter(); cekServer();
+    ubahTanggal(''); ubahTanggal('c_'); hitung(''); hitung('c_'); cekCleanter(); cekServer();
+    muatHargaDef(true);
     panggil('getInfoAwal', [])
       .then(function(info){
         document.getElementById('tanggal').value = info.tanggal;
         document.getElementById('hari').value = info.hari;
+        document.getElementById('c_tanggal').value = info.tanggal;
+        document.getElementById('c_hari').value = info.hari;
       }, function(){});
   })();
 </script>
