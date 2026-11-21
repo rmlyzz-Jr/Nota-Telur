@@ -62,6 +62,8 @@
   #toast.err{background:var(--bahaya)}
   #toast.ok{background:var(--ok)}
   .hidden{display:none}
+  .kredit{display:flex;align-items:center;justify-content:center;gap:8px;margin:24px 0 8px;color:var(--redup);font-size:14px;font-weight:700;letter-spacing:.02em}
+  .kredit img{height:30px;width:auto}
   .lnk{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--biru2);text-decoration:underline;cursor:pointer}
   #modalNota{display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:50;background:rgba(15,23,42,.6);align-items:center;justify-content:center;padding:16px}
   #modalNota .wadah{width:100%;max-width:360px;max-height:90vh;display:flex;flex-direction:column;gap:10px}
@@ -381,6 +383,10 @@
       </div>
     </div>
   </section>
+  <div class="kredit">
+    <img src="https://i.ibb.co.com/7N6HR7WG/Blue-Dragon-Infinity-Emblem.png" alt="Logo Rmlyzz" onerror="this.style.display='none'">
+    <span>Rmlyzz</span>
+  </div>
 </main>
 
 <div id="barCetak" style="display:none;position:fixed;left:0;right:0;bottom:0;background:#0f172a;color:#fff;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));align-items:center;gap:10px;z-index:15;flex-wrap:wrap">
@@ -411,7 +417,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbw1i_3daNZmFArQ82t_jGuE5D2v04hXQmWelGmE_zH9S56iSiKSXgeTcXhV_Pyxjwy7aQ/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxCF4_dWpRSF80n_yRF-_IFRKcZFCYmMMx5UoJDqOCH4qmSaGMCd6UoPD-YUQSWABtzgA/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -456,13 +462,21 @@
   function esc(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function qty(n){ return String(Math.round(n*100)/100).replace('.',','); }
 
-  /* Tanggal pada nota: ikan = "Hari, dd/mm/yyyy"; telur & cetak tetap seperti semula */
+  /* Tanggal pada nota (telur, ikan, cetak): "Hari, dd/mm/yyyy" */
+  var BULAN_ID = {jan:1,feb:2,mar:3,apr:4,mei:5,may:5,jun:6,jul:7,agu:8,ags:8,aug:8,sep:9,okt:10,oct:10,nov:11,des:12,dec:12};
+  function pad2(n){ return ('0'+n).slice(-2); }
   function tglSlash(s){
-    var m = String(s||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
-    return m ? m[3]+'/'+m[2]+'/'+m[1] : String(s||'');
+    s = String(s||'').trim();
+    var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);                 // yyyy-mm-dd
+    if(m) return pad2(m[3])+'/'+pad2(m[2])+'/'+m[1];
+    m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})/);          // dd/mm/yyyy, dd-mm-yyyy
+    if(m) return pad2(m[1])+'/'+pad2(m[2])+'/'+m[3];
+    m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\.?\s+(\d{4})/);             // 21 Nov 2026 / 21 November 2026
+    if(m){ var b = BULAN_ID[m[2].toLowerCase().slice(0,3)]; if(b) return pad2(m[1])+'/'+pad2(b)+'/'+m[3]; }
+    return s;
   }
   function teksTanggal(o){
-    return o.hari + ', ' + (o.tipe === 'ikan' ? tglSlash(o.tanggal) : o.tanggal);
+    return o.hari + ', ' + tglSlash(o.tanggal);
   }
 
   function toast(msg, tipe){
@@ -611,7 +625,7 @@
     c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
     c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
     c.push({type:'divider'});
-    c.push({type:'row', left:'Tanggal', right:ascii(teksTanggal(o))});
+    c.push({type:'text', text:ascii(teksTanggal(o)), align:'left'});
     c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:CLEANTER_NAMA});
     c.push({type:'divider'});
     itemNota(o).forEach(function(it){
@@ -695,7 +709,7 @@
     t('NOTA PENJUALAN\n');
     cmd(0x1B,0x61,0);                     // rata kiri
     garis();
-    info('Tanggal', teksTanggal(o));
+    t(String(teksTanggal(o)).substring(0,W)+'\n');   // tanggal rata kiri, tanpa label
     cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);  // nama pembeli: tengah, tebal, tinggi 2x
     var nm = String(o.nama);
     do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
@@ -797,14 +811,14 @@
       'table.items th.r{text-align:right}'+
       'table.items td{padding:2px;border-bottom:1px dotted #000}'+
       '.tot td{padding-top:4px;font-weight:bold;font-size:calc(var(--f) + 2px)}'+
+      '.tgl{text-align:left;margin:1px 0}'+
       '.nm{text-align:center;font-weight:bold;font-size:calc(var(--f) + 1px);margin:2px 0}'+
       'table.items td:first-child{font-weight:bold;font-size:calc(var(--f) + 1px)}'+
       '.merah{color:#dc2626;font-weight:bold}'+
       '</style></head><body><div id="wrap">'+
       '<div class="head"><img id="lg" src="'+LOGO_NOTA+'"><div><div class="firm">PT RAFASYA PUTRA USTANTO</div><div class="judul">NOTA PENJUALAN</div></div></div>'+
       '<div class="garis"></div>'+
-      '<table class="info">'+
-      '<tr><td style="width:15mm">Tanggal</td><td>: '+esc(teksTanggal(o))+'</td></tr></table>'+
+      '<div class="tgl">'+esc(teksTanggal(o))+'</div>'+
       '<div class="nm">'+esc(o.nama)+'</div>'+
       '<div class="garis"></div>'+
       '<table class="items"><tr><th>Jenis</th><th class="r">Qty</th><th class="r">Harga</th><th class="r">Total</th></tr>'+
