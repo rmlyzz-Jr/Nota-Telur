@@ -426,6 +426,8 @@
   var NOTA_LEBAR  = 65; // mm
   var NOTA_TINGGI = 65; // mm (panjang maksimal nota)
   var NOTA_FONT   = 11; // ukuran huruf nota di dialog cetak browser (px). Naikkan untuk lebih besar, mis. 13 atau 14
+  var NOTA_PANJANG_MAKS = { telur: 65, ikan: 0, cetak: 0 }; // panjang maksimal nota (mm) per jenis, semua metode cetak. 0 = tanpa batas khusus
+  var NOTA_MM_BARIS = 3.75; // perkiraan tinggi 1 baris huruf normal di printer thermal 203 dpi (mm); huruf besar dihitung 2x. Sesuaikan bila hasil cetak lebih panjang/pendek
 
   /* ===== Pengaturan Cleanter ===== */
   var CLEANTER_URL    = 'http://localhost:9100';
@@ -620,25 +622,80 @@
 
   function ascii(s){ return String(s==null ? '' : s).replace(/[^\x20-\x7E]/g,'?'); }
 
-  function buatKontenCleanter(o){
+  function jenisNota(o){ return o.tipe === 'ikan' ? 'ikan' : (o.tipe === 'cetak' ? 'cetak' : 'telur'); }
+
+  /* Perkiraan panjang nota (mm) dari isi Cleanter */
+  function taksirMmCleanter(c){
+    var kar = CLEANTER_KERTAS >= 80 ? 48 : 32, mm = 0;
+    c.forEach(function(e){
+      var f = e.size === 'large' ? 2 : 1;
+      if(e.type === 'divider') mm += NOTA_MM_BARIS;
+      else if(e.type === 'feed') mm += (e.lines || 1) * NOTA_MM_BARIS;
+      else {
+        var n = e.type === 'row' ? String(e.left).length + String(e.right).length + 1 : String(e.text).length;
+        mm += Math.max(1, Math.ceil(n / (kar / f))) * NOTA_MM_BARIS * f;
+      }
+    });
+    return mm;
+  }
+
+  /* Telur 2 item (Besar + Kecil): judul, subjudul, NAMA (kiri, besar) + tanggal (kanan), lalu item */
+  function susunCleanterDua(o, items, lv){
+    var sNama = lv >= 5 ? 'normal' : CLEANTER_NAMA;
     var c = [];
     c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
     c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
+    if(lv < 4) c.push({type:'divider'});
+    c.push({type:'text', text:ascii(o.nama), align:'left', bold:true, size:sNama});
+    c.push({type:'text', text:ascii(teksTanggal(o)), align:'right'});
+    c.push({type:'divider'});
+    items.forEach(function(it){
+      /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya */
+      c.push({type:'row', left:ascii(it.judul).toUpperCase(), right:qty(it.qty) + ' x ' + angka(it.harga), bold:true, size:CLEANTER_RINCIAN});
+      c.push({type:'text', text:angka(it.total), align:'right', size:CLEANTER_RINCIAN});
+    });
+    if(lv < 3) c.push({type:'divider'});
+    if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
+    else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
+    var feed = lv >= 2 ? 0 : (lv >= 1 ? 1 : 2);
+    if(feed > 0) c.push({type:'feed', lines:feed});
+    return c;
+  }
+
+  /* lv = tingkat pemadatan (0 = ukuran penuh). Dinaikkan otomatis bila nota melebihi batas panjang */
+  function susunCleanter(o, lv){
+    var items = itemNota(o);
+    if(jenisNota(o) === 'telur' && items.length === 2) return susunCleanterDua(o, items, lv);
+    var sJudul = lv >= 5 ? 'normal' : CLEANTER_JUDUL;
+    var sNama = lv >= 4 ? 'normal' : CLEANTER_NAMA;
+    var sJenis = lv >= 3 ? 'normal' : CLEANTER_JENIS;
+    var sRinci = lv >= 2 ? 'normal' : CLEANTER_RINCIAN;
+    var c = [];
+    c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:sJudul});
+    c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
     c.push({type:'divider'});
     c.push({type:'text', text:ascii(teksTanggal(o)), align:'left'});
-    c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:CLEANTER_NAMA});
+    c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:sNama});
     c.push({type:'divider'});
-    itemNota(o).forEach(function(it){
-      c.push({type:'text', text:ascii(it.judul), bold:true, size:CLEANTER_JENIS});
-      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total), size:CLEANTER_RINCIAN});
+    items.forEach(function(it){
+      c.push({type:'text', text:ascii(it.judul), bold:true, size:sJenis});
+      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total), size:sRinci});
     });
     c.push({type:'divider'});
     if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
     else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
-    c.push({type:'feed', lines:2});
+    c.push({type:'feed', lines: lv >= 1 ? 1 : 2});
     return c;
   }
 
+  function buatKontenCleanter(o){
+    var batas = NOTA_PANJANG_MAKS[jenisNota(o)] || 0, c;
+    for(var lv = 0; lv <= 5; lv++){
+      c = susunCleanter(o, lv);
+      if(!batas || taksirMmCleanter(c) <= batas) break;
+    }
+    return c;
+  }
   function pesanGagalCleanter(j){
     if(j && j.fix) return j.fix;
     if(j && j.detail) return j.detail;
@@ -686,47 +743,86 @@
   }
 
   /* ===== Cetak ke printer thermal 80 mm lewat aplikasi RawBT (ESC/POS) ===== */
-  function buatEscPos(o){
-    var W = 48, out = [];
-    function t(s){ s = String(s).replace(/[^\x20-\x7E]/g,'?'); for(var i=0;i<s.length;i++) out.push(s.charCodeAt(i)); }
+  function susunEscPos(o, lv){
+    var W = 48, out = [], mm = 0, fak = 1;
+    var items = itemNota(o);
+    var dua = jenisNota(o) === 'telur' && items.length === 2;   // Telur Besar + Kecil: tata letak khusus
+    var bJudul = dua ? true : lv < 4;
+    var bNama  = dua ? lv < 5 : lv < 3;
+    var bJenis = lv < 2;
+    var feed   = dua ? (lv >= 2 ? 0 : (lv >= 1 ? 1 : 3)) : (lv >= 1 ? 1 : 3);
+    function t(s){
+      s = String(s).replace(/[^\x20-\x7E\n]/g,'?');
+      for(var i=0;i<s.length;i++){ out.push(s.charCodeAt(i)); if(s.charAt(i) === '\n') mm += NOTA_MM_BARIS * fak; }
+    }
     function cmd(){ for(var i=0;i<arguments.length;i++) out.push(arguments[i]); }
+    function besar(on){ cmd(0x1D,0x21,on ? 0x01 : 0x00); fak = on ? 2 : 1; }   // tinggi 2x / normal
     function pr(s,w){ s=String(s); while(s.length<w) s+=' '; return s.substring(0,w); }
     function pl(s,w){ s=String(s); while(s.length<w) s=' '+s; return s; }
     function garis(){ t(new Array(W+1).join('-')+'\n'); }
-    function info(label,val){
-      var pre = pr(label,8)+': ', lv = W-pre.length;
-      val = String(val);
-      t(pre+val.substring(0,lv)+'\n');
-      var sisa = val.substring(lv);
-      while(sisa.length){ t(new Array(pre.length+1).join(' ')+sisa.substring(0,lv)+'\n'); sisa = sisa.substring(lv); }
-    }
 
     cmd(0x1B,0x40);                       // reset printer
     cmd(0x1B,0x61,1);                     // rata tengah
-    cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);// tebal + tinggi 2x
+    cmd(0x1B,0x45,1); if(bJudul) besar(true);
     t('PT RAFASYA PUTRA USTANTO\n');
-    cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0);   // ukuran & tebal normal
+    besar(false); cmd(0x1B,0x45,0);
     t('NOTA PENJUALAN\n');
     cmd(0x1B,0x61,0);                     // rata kiri
+    if(!dua || lv < 4) garis();
+    if(dua){
+      /* NAMA PEMBELI (kiri, tebal, tinggi 2x) + Hari, dd/mm/yyyy (kanan, normal) pada satu baris */
+      var nm2 = String(o.nama), dt = String(teksTanggal(o));
+      cmd(0x1B,0x45,1); if(bNama) besar(true);
+      if(nm2.length + 1 + dt.length <= W){
+        t(nm2);
+        besar(false); cmd(0x1B,0x45,0);
+        t(pl(dt, W - nm2.length));
+        out.push(10); mm += NOTA_MM_BARIS * (bNama ? 2 : 1);
+      } else {   // nama terlalu panjang: tanggal turun ke baris berikutnya
+        do { t(nm2.substring(0,W)+'\n'); nm2 = nm2.substring(W); } while(nm2.length);
+        besar(false); cmd(0x1B,0x45,0);
+        t(pl(dt, W)+'\n');
+      }
+    } else {
+      t(String(teksTanggal(o)).substring(0,W)+'\n');   // tanggal rata kiri, tanpa label
+      cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); if(bNama) besar(true);   // nama pembeli: tengah, tebal
+      var nm = String(o.nama);
+      do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
+      besar(false); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
+    }
     garis();
-    t(String(teksTanggal(o)).substring(0,W)+'\n');   // tanggal rata kiri, tanpa label
-    cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);  // nama pembeli: tengah, tebal, tinggi 2x
-    var nm = String(o.nama);
-    do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
-    cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
-    garis();
-    itemNota(o).forEach(function(it){
-      cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);                  // jenis: tebal + tinggi 2x
-      t(String(it.judul).substring(0,W)+'\n');
-      cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0);
-      t(pr(qty(it.qty)+' x '+angka(it.harga), W-16)+pl(angka(it.total),16)+'\n');
+    items.forEach(function(it){
+      if(dua){
+        /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (tebal, tinggi 2x) */
+        var kanan = qty(it.qty)+' x '+angka(it.harga), kiri = String(it.judul).toUpperCase();
+        cmd(0x1B,0x45,1); besar(true);
+        t(pr(kiri, Math.max(0, W-kanan.length))+kanan+'\n');
+        besar(false); cmd(0x1B,0x45,0);
+        besar(true);
+        t(pl(angka(it.total), W)+'\n');
+        besar(false);
+      } else {
+        cmd(0x1B,0x45,1); if(bJenis) besar(true);                // jenis: tebal (+ tinggi 2x bila muat)
+        t(String(it.judul).substring(0,W)+'\n');
+        besar(false); cmd(0x1B,0x45,0);
+        t(pr(qty(it.qty)+' x '+angka(it.harga), W-16)+pl(angka(it.total),16)+'\n');
+      }
     });
-    garis();
-    cmd(0x1B,0x45,1); cmd(0x1D,0x21,0x01);// tebal + tinggi 2x
+    if(!dua || lv < 3) garis();
+    cmd(0x1B,0x45,1); besar(true);
     t(pr('TOTAL',W-20)+pl(rp(o.grandTotal),20)+'\n');
-    cmd(0x1D,0x21,0x00); cmd(0x1B,0x45,0);
-    cmd(0x1B,0x64,3);                     // feed 3 baris
-    return out;
+    besar(false); cmd(0x1B,0x45,0);
+    if(feed > 0){ cmd(0x1B,0x64,feed); mm += feed * NOTA_MM_BARIS; }
+    return {out: out, mm: mm};
+  }
+
+  function buatEscPos(o){
+    var batas = NOTA_PANJANG_MAKS[jenisNota(o)] || 0, r;
+    for(var lv = 0; lv <= 5; lv++){
+      r = susunEscPos(o, lv);
+      if(!batas || r.mm <= batas) break;
+    }
+    return r.out;
   }
 
   function keBase64(bytes){
@@ -787,7 +883,7 @@
 
   /* Cetak lewat dialog cetak browser (bisa memakai Print Service Cleanter) */
   function cetakBrowser(o){
-    var lebar = NOTA_LEBAR, tinggi = NOTA_TINGGI;   // mm
+    var lebar = NOTA_LEBAR, tinggi = NOTA_PANJANG_MAKS[jenisNota(o)] || NOTA_TINGGI;   // mm
     var isi = lebar - 6;
     var baris = '';
     itemNota(o).forEach(function(it){
@@ -798,7 +894,7 @@
       '@page{size:'+lebar+'mm '+tinggi+'mm;margin:0}'+
       ':root{--f:'+NOTA_FONT+'px}'+
       'html,body{margin:0;padding:0;background:#fff;height:'+tinggi+'mm;overflow:hidden}'+
-      'body{width:'+isi+'mm;margin:0 3mm;padding:2mm 0;font-family:Arial,Helvetica,sans-serif;font-size:var(--f);font-weight:normal;color:#000}'+
+      'body{width:'+isi+'mm;margin:0 3mm;padding:0 0 2mm;font-family:Arial,Helvetica,sans-serif;font-size:var(--f);font-weight:normal;color:#000}'+
       '.r{text-align:right}'+
       '.head{display:flex;align-items:center;gap:2mm}'+
       '.head img{height:12mm;width:auto;filter:grayscale(1) contrast(1.5)}'+
@@ -836,7 +932,7 @@
     function cetak(){
       if(sudah) return; sudah = true;
       try{   // kecilkan huruf otomatis bila isi lebih tinggi dari kertas
-        var w = doc.getElementById('wrap'), fs = NOTA_FONT, maks = (tinggi - 4) * 3.7795;
+        var w = doc.getElementById('wrap'), fs = NOTA_FONT, maks = (tinggi - 2) * 3.7795;
         while(w && w.offsetHeight > maks && fs > 7){ fs -= 0.5; doc.documentElement.style.setProperty('--f', fs + 'px'); }
       }catch(e){}
       try{ ifr.contentWindow.focus(); ifr.contentWindow.print(); }
