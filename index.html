@@ -389,7 +389,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbyUCb7HBL6ZpojIbiiJlbt7oGMPC_YanTOJzwX8RLZpaknv827_YRJTp-qr3SDn1MjdXg/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwaN92SEDVCD_PvirI30zH3U-XYtw9gfk9ZxrlMIbggiYWOeSFElmYFjthtgObT02xPNA/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -405,6 +405,7 @@
   var CLEANTER_JUDUL  = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama PT & total (large hanya untuk kertas 80 mm)
   var CLEANTER_NAMA   = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama pembeli
   var CLEANTER_JENIS  = CLEANTER_KERTAS >= 80 ? 'large' : 'normal';  // ukuran nama jenis ikan/telur (ubah ke 'normal' bila terlalu besar)
+  var CLEANTER_RINCIAN = CLEANTER_KERTAS >= 80 ? 'large' : 'normal'; // ukuran rincian (Kg x harga ... total)
 
   /* Harga default Besar/Kecil (diambil dari sheet "Pengaturan Harga") */
   var HARGA_DEF = { telur: {besar: 150000, kecil: 50000}, cetak: {besar: 150000, kecil: 50000} };
@@ -593,7 +594,7 @@
     c.push({type:'divider'});
     itemNota(o).forEach(function(it){
       c.push({type:'text', text:ascii(it.judul), bold:true, size:CLEANTER_JENIS});
-      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total)});
+      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total), size:CLEANTER_RINCIAN});
     });
     c.push({type:'divider'});
     if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
