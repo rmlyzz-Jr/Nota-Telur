@@ -417,7 +417,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbxCF4_dWpRSF80n_yRF-_IFRKcZFCYmMMx5UoJDqOCH4qmSaGMCd6UoPD-YUQSWABtzgA/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbxzSW-I679FBCHevdbQvKTvZjk19V2uiTab-loAWkSJ6-Jg3XRFyYdVt6dshICyTTJfQw/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -639,22 +639,19 @@
     return mm;
   }
 
-  /* Telur 2 item (Besar + Kecil): judul, subjudul, NAMA (kiri, besar) + tanggal (kanan), lalu item */
+  /* Telur 2 item (Besar + Kecil): judul PT, garis, [NOTA PENJUALAN .... tanggal], NAMA (tengah, besar), garis, item (normal), TOTAL */
   function susunCleanterDua(o, items, lv){
-    var sNama = lv >= 5 ? 'normal' : CLEANTER_NAMA;
     var c = [];
     c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
-    c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
-    if(lv < 4) c.push({type:'divider'});
-    c.push({type:'text', text:ascii(o.nama), align:'left', bold:true, size:sNama});
-    c.push({type:'text', text:ascii(teksTanggal(o)), align:'right'});
+    c.push({type:'divider'});
+    c.push({type:'row', left:'NOTA PENJUALAN', right:ascii(teksTanggal(o))});
+    c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:CLEANTER_NAMA});   // nama pembeli selalu large + tebal
     c.push({type:'divider'});
     items.forEach(function(it){
-      /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya */
-      c.push({type:'row', left:ascii(it.judul).toUpperCase(), right:qty(it.qty) + ' x ' + angka(it.harga), bold:true, size:CLEANTER_RINCIAN});
-      c.push({type:'text', text:angka(it.total), align:'right', size:CLEANTER_RINCIAN});
+      /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (normal) */
+      c.push({type:'row', left:ascii(it.judul).toUpperCase(), right:qty(it.qty) + ' x ' + angka(it.harga)});
+      c.push({type:'text', text:angka(it.total), align:'right'});
     });
-    if(lv < 3) c.push({type:'divider'});
     if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
     else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
     var feed = lv >= 2 ? 0 : (lv >= 1 ? 1 : 2);
@@ -748,7 +745,7 @@
     var items = itemNota(o);
     var dua = jenisNota(o) === 'telur' && items.length === 2;   // Telur Besar + Kecil: tata letak khusus
     var bJudul = dua ? true : lv < 4;
-    var bNama  = dua ? lv < 5 : lv < 3;
+    var bNama  = dua ? true : lv < 3;   // telur 2 item: judul PT & nama pembeli selalu tinggi 2x + tebal
     var bJenis = lv < 2;
     var feed   = dua ? (lv >= 2 ? 0 : (lv >= 1 ? 1 : 3)) : (lv >= 1 ? 1 : 3);
     function t(s){
@@ -766,41 +763,28 @@
     cmd(0x1B,0x45,1); if(bJudul) besar(true);
     t('PT RAFASYA PUTRA USTANTO\n');
     besar(false); cmd(0x1B,0x45,0);
-    t('NOTA PENJUALAN\n');
     cmd(0x1B,0x61,0);                     // rata kiri
-    if(!dua || lv < 4) garis();
     if(dua){
-      /* NAMA PEMBELI (kiri, tebal, tinggi 2x) + Hari, dd/mm/yyyy (kanan, normal) pada satu baris */
-      var nm2 = String(o.nama), dt = String(teksTanggal(o));
-      cmd(0x1B,0x45,1); if(bNama) besar(true);
-      if(nm2.length + 1 + dt.length <= W){
-        t(nm2);
-        besar(false); cmd(0x1B,0x45,0);
-        t(pl(dt, W - nm2.length));
-        out.push(10); mm += NOTA_MM_BARIS * (bNama ? 2 : 1);
-      } else {   // nama terlalu panjang: tanggal turun ke baris berikutnya
-        do { t(nm2.substring(0,W)+'\n'); nm2 = nm2.substring(W); } while(nm2.length);
-        besar(false); cmd(0x1B,0x45,0);
-        t(pl(dt, W)+'\n');
-      }
+      garis();
+      /* NOTA PENJUALAN (kiri) .... Hari, dd/mm/yyyy (kanan), normal */
+      var dt = String(teksTanggal(o));
+      t(pr('NOTA PENJUALAN', Math.max(0, W - dt.length)) + dt + '\n');
     } else {
+      cmd(0x1B,0x61,1); t('NOTA PENJUALAN\n'); cmd(0x1B,0x61,0);
+      garis();
       t(String(teksTanggal(o)).substring(0,W)+'\n');   // tanggal rata kiri, tanpa label
-      cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); if(bNama) besar(true);   // nama pembeli: tengah, tebal
-      var nm = String(o.nama);
-      do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
-      besar(false); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
     }
+    cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); if(bNama) besar(true);   // nama pembeli: tengah, tebal
+    var nm = String(o.nama);
+    do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
+    besar(false); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
     garis();
     items.forEach(function(it){
       if(dua){
-        /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (tebal, tinggi 2x) */
+        /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (normal) */
         var kanan = qty(it.qty)+' x '+angka(it.harga), kiri = String(it.judul).toUpperCase();
-        cmd(0x1B,0x45,1); besar(true);
         t(pr(kiri, Math.max(0, W-kanan.length))+kanan+'\n');
-        besar(false); cmd(0x1B,0x45,0);
-        besar(true);
         t(pl(angka(it.total), W)+'\n');
-        besar(false);
       } else {
         cmd(0x1B,0x45,1); if(bJenis) besar(true);                // jenis: tebal (+ tinggi 2x bila muat)
         t(String(it.judul).substring(0,W)+'\n');
@@ -808,7 +792,7 @@
         t(pr(qty(it.qty)+' x '+angka(it.harga), W-16)+pl(angka(it.total),16)+'\n');
       }
     });
-    if(!dua || lv < 3) garis();
+    if(!dua) garis();
     cmd(0x1B,0x45,1); besar(true);
     t(pr('TOTAL',W-20)+pl(rp(o.grandTotal),20)+'\n');
     besar(false); cmd(0x1B,0x45,0);
