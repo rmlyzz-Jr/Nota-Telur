@@ -11,7 +11,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nota RPU">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
   :root{--biru:#1e3a8a;--biru2:#2563eb;--bg:#f1f5f9;--kartu:#fff;--garis:#cbd5e1;--teks:#0f172a;--redup:#64748b;--ok:#16a34a;--bahaya:#dc2626;--peringatan:#d97706;}
   *{box-sizing:border-box}
@@ -19,7 +19,7 @@
   header{background:var(--biru);color:#fff;padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px;}
   header img{height:46px;background:#fff;border-radius:8px;padding:3px;}
   header h1{font-size:17px;margin:0;line-height:1.2}
-  header small{opacity:.8} 
+  header small{opacity:.8}
   header .grow{flex:1}
   #btnPasang{display:none;padding:9px 12px;border:0;border-radius:8px;background:#fff;color:var(--biru);font-weight:700;font-size:13px;cursor:pointer}
   .tabs{display:flex;background:#fff;border-bottom:1px solid var(--garis);position:sticky;top:0;z-index:5}
@@ -57,11 +57,22 @@
   .status-printer.warn{color:var(--peringatan)}
   .status-printer.err{color:var(--bahaya)}
   #statusServer{font-size:12px;margin-top:6px;color:var(--redup)}
-  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:40;max-width:90%}
+  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 18px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;max-width:90%}
   #toast.tampil{opacity:1}
   #toast.err{background:var(--bahaya)}
   #toast.ok{background:var(--ok)}
   .hidden{display:none}
+  .lnk{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--biru2);text-decoration:underline;cursor:pointer}
+  #modalNota{display:none;position:fixed;left:0;right:0;top:0;bottom:0;z-index:50;background:rgba(15,23,42,.6);align-items:center;justify-content:center;padding:16px}
+  #modalNota .wadah{width:100%;max-width:360px;max-height:90vh;display:flex;flex-direction:column;gap:10px}
+  #isiNota{background:#fff;color:#000;border-radius:6px;padding:18px 16px;overflow-y:auto;font-family:"Courier New",Courier,monospace;font-size:14px;line-height:1.35;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .kt-garis{border-top:1px dashed #000;margin:6px 0}
+  .kt-txt{word-break:break-word}
+  .kt-row{display:flex;justify-content:space-between;gap:8px}
+  .kt-row span:last-child{text-align:right}
+  .kt-txt.b,.kt-row.b{font-weight:700}
+  .kt-txt.besar,.kt-row.besar{font-size:19px;line-height:1.25}
+  #modalNota .aksi{display:flex;gap:10px}
   .rk{position:relative;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr) minmax(0,1fr) 44px;gap:6px;align-items:center}
   .rk-head{font-size:12px;font-weight:600;color:var(--redup);margin-bottom:4px}
   .item-ikan{margin-bottom:8px}
@@ -381,6 +392,17 @@
 
 <!-- Dropdown saran nama ikan (dipindah JS ke bawah field Jenis yang aktif) -->
 <div id="saranIkan"></div>
+
+<!-- Detail nota (tampilan seperti hasil cetak Cleanter) -->
+<div id="modalNota" onclick="if(event.target===this)tutupNota()">
+  <div class="wadah">
+    <div id="isiNota"></div>
+    <div class="aksi">
+      <button class="btn sek" onclick="tutupNota()">Tutup</button>
+      <button class="btn" onclick="cetakDariModal()">Cetak</button>
+    </div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -728,6 +750,27 @@
   function cetakTerakhir(){ if(NOTA_TERAKHIR) cetakThermal(NOTA_TERAKHIR); }
   function cetakDialogTerakhir(){ if(NOTA_TERAKHIR) cetakBrowser(NOTA_TERAKHIR); }
 
+  /* ===== Detail nota: tampilan seperti hasil cetak Cleanter ===== */
+  var NOTA_LIHAT = null;
+  function lihatNota(el){
+    var j = el.getAttribute('data-j'), no = el.getAttribute('data-no');
+    var o = j === 'ikan' ? (window.REKAP_IKAN||{})[no] : (window.REKAPJ[j]||{})[no];
+    if(!o) return;
+    NOTA_LIHAT = o;
+    var h = '';
+    buatKontenCleanter(o).forEach(function(c){
+      var kls = (c.bold ? ' b' : '') + (c.size === 'large' ? ' besar' : '');
+      if(c.type === 'divider') h += '<div class="kt-garis"></div>';
+      else if(c.type === 'feed') h += '<div style="height:'+((c.lines||1)*8)+'px"></div>';
+      else if(c.type === 'row') h += '<div class="kt-row'+kls+'"><span>'+esc(c.left)+'</span><span>'+esc(c.right)+'</span></div>';
+      else h += '<div class="kt-txt'+kls+'" style="text-align:'+(c.align||'left')+'">'+esc(c.text)+'</div>';
+    });
+    document.getElementById('isiNota').innerHTML = h;
+    document.getElementById('modalNota').style.display = 'flex';
+  }
+  function tutupNota(){ document.getElementById('modalNota').style.display = 'none'; }
+  function cetakDariModal(){ var o = NOTA_LIHAT; tutupNota(); if(o) cetakThermal(o); }
+
   /* Cetak lewat dialog cetak browser (bisa memakai Print Service Cleanter) */
   function cetakBrowser(o){
     var lebar = NOTA_LEBAR, tinggi = NOTA_TINGGI;   // mm
@@ -854,7 +897,7 @@
         tb.innerHTML = res.rows.map(function(r){
           var attr = 'data-no="'+esc(r.noNota)+'" data-j="'+j+'"';
           return '<tr>'+
-            '<td>'+esc(r.noNota)+'</td>'+
+            '<td><button type="button" class="lnk" '+attr+' onclick="lihatNota(this)">'+esc(r.noNota)+'</button></td>'+
             '<td>'+esc(r.hari)+', '+esc(r.tanggal)+'</td>'+
             '<td>'+esc(r.nama)+'</td>'+
             '<td class="r">'+(r.besarQty?qty(r.besarQty)+' '+esc(r.satuan)+'<br><small>'+rp(r.besarTotal)+'</small>':'-')+'</td>'+
@@ -1040,13 +1083,13 @@
           return;
         }
         window.REKAP_IKAN = {};
-        res.rows.forEach(function(r){ window.REKAP_IKAN[r.noNota] = r; });
+        res.rows.forEach(function(r){ r.tipe = 'ikan'; window.REKAP_IKAN[r.noNota] = r; });
         tb.innerHTML = res.rows.map(function(r){
           var rincian = r.items.map(function(it){
             return esc(it.jenis)+' '+qty(it.qty)+' Kg x '+angka(it.harga)+' = '+angka(it.total);
           }).join('<br>');
           return '<tr>'+
-            '<td>'+esc(r.noNota)+'</td>'+
+            '<td><button type="button" class="lnk" data-no="'+esc(r.noNota)+'" data-j="ikan" onclick="lihatNota(this)">'+esc(r.noNota)+'</button></td>'+
             '<td>'+esc(r.hari)+', '+esc(r.tanggal)+'</td>'+
             '<td>'+esc(r.nama)+'</td>'+
             '<td>'+rincian+'</td>'+
