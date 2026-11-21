@@ -13,7 +13,7 @@ self.addEventListener('activate', function (e) {
     return Promise.all(ks.filter(function (k) { return k !== CACHE; })
       .map(function (k) { return caches.delete(k); }));
   }));
-  self.clients.claim();
+  self.clients.claim(); 
 });
 
 self.addEventListener('fetch', function (e) {
