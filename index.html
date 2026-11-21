@@ -417,7 +417,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbxzSW-I679FBCHevdbQvKTvZjk19V2uiTab-loAWkSJ6-Jg3XRFyYdVt6dshICyTTJfQw/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbzEkJ_EK1y5GCgLKiwJjBkwDoeIiHc5lP-14LBxbMbELQcl_B0pdv32WvjI2WaHd0-69g/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -639,7 +639,7 @@
     return mm;
   }
 
-  /* Telur 2 item (Besar + Kecil): judul PT, garis, [NOTA PENJUALAN .... tanggal], NAMA (tengah, besar), garis, item (normal), TOTAL */
+  /* Telur 2 item (Besar + Kecil): judul PT, garis, [NOTA PENJUALAN .... tanggal], NAMA (tengah, besar), garis, item (large), TOTAL */
   function susunCleanterDua(o, items, lv){
     var c = [];
     c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:CLEANTER_JUDUL});
@@ -648,9 +648,9 @@
     c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:CLEANTER_NAMA});   // nama pembeli selalu large + tebal
     c.push({type:'divider'});
     items.forEach(function(it){
-      /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (normal) */
-      c.push({type:'row', left:ascii(it.judul).toUpperCase(), right:qty(it.qty) + ' x ' + angka(it.harga)});
-      c.push({type:'text', text:angka(it.total), align:'right'});
+      /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (large) */
+      c.push({type:'row', left:ascii(it.judul).toUpperCase(), right:qty(it.qty) + ' x ' + angka(it.harga), size:CLEANTER_RINCIAN});
+      c.push({type:'text', text:angka(it.total), align:'right', size:CLEANTER_RINCIAN});
     });
     if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
     else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
@@ -781,10 +781,12 @@
     garis();
     items.forEach(function(it){
       if(dua){
-        /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (normal) */
+        /* JENIS (kiri) ........ Qty x Harga (kanan), lalu Jumlah rata kanan di baris bawahnya (large, tinggi 2x) */
         var kanan = qty(it.qty)+' x '+angka(it.harga), kiri = String(it.judul).toUpperCase();
+        besar(true);
         t(pr(kiri, Math.max(0, W-kanan.length))+kanan+'\n');
         t(pl(angka(it.total), W)+'\n');
+        besar(false);
       } else {
         cmd(0x1B,0x45,1); if(bJenis) besar(true);                // jenis: tebal (+ tinggi 2x bila muat)
         t(String(it.judul).substring(0,W)+'\n');
