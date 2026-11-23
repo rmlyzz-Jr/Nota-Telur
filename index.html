@@ -96,6 +96,14 @@
   #saranIkan button small{color:var(--redup);font-size:13px;margin-left:10px}
   .sw{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:600;cursor:pointer}
   .sw input{width:24px;height:24px;padding:0;margin:0;flex:0 0 auto}
+  .kertas{background:#fff;color:#000;border-radius:6px;padding:18px 16px;font-family:"Courier New",Courier,monospace;font-size:14px;line-height:1.35;border:1px solid var(--garis);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .hurufwrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+  .hf-row{display:grid;grid-template-columns:1fr 96px auto;gap:8px;align-items:center;margin-bottom:10px;font-size:13px;font-weight:600}
+  .hf-row select{padding:8px}
+  .hf-tebal{font-size:13px}
+  .hf-tebal input{width:20px;height:20px}
+  .hf-prev{position:sticky;top:60px}
+  @media(max-width:600px){.hurufwrap{grid-template-columns:1fr}.hf-prev{position:static;order:-1}}
   @media(max-width:520px){.baris3{grid-template-columns:1fr 1fr}.filter{grid-template-columns:1fr 1fr}.filter button{grid-column:1/-1}}
 </style>
 </head>
@@ -362,6 +370,7 @@
         <div id="daftarPengaturan"><div class="kosong">Memuat...</div></div>
         <div class="status-printer">Perubahan nama atau harga tersimpan otomatis dan dipakai di Input Ikan.</div>
       </div>
+      <div id="huruf-ikan"></div>
     </div>
 
     <div id="pg-telur">
@@ -389,6 +398,7 @@
         <label class="sw"><input type="checkbox" id="batasTelur" onchange="ubahBatasTelur()"><span>Batasi panjang nota Telur maksimal 65 mm</span></label>
         <div class="status-printer">Nonaktif (bawaan): format sama dengan nota Ikan, semua huruf mengikuti ukuran penuh. Aktif: huruf dikecilkan otomatis bila nota lebih panjang dari 65 mm. Pengaturan ini tersimpan di perangkat ini.</div>
       </div>
+      <div id="huruf-telur"></div>
     </div>
 
     <div id="pg-cetak" class="hidden">
@@ -407,6 +417,7 @@
         <button class="btn" style="width:100%;margin-top:12px" onclick="simpanHarga('cetak')">Simpan</button>
         <div class="status-printer">Harga ini terisi otomatis di Input Cetak (tersimpan di sheet "Pengaturan Harga").</div>
       </div>
+      <div id="huruf-cetak"></div>
     </div>
   </section>
   <div class="kredit">
@@ -443,7 +454,7 @@
      PENGATURAN UTAMA
      API_URL = alamat Web App Google Apps Script (Deploy > Web app, akhiran /exec)
      ===================================================================== */
-  var API_URL = 'https://script.google.com/macros/s/AKfycbwVDqT3AQj8bNS78OiSvJBTOhmk64-IOFNYCYY_OEWLnkYepqfaWa5EPrKH1YMrLKq-cQ/exec';
+  var API_URL = 'https://script.google.com/macros/s/AKfycbwdp9GDpOUeq2l3knPFKmbHbIwRYrjZJM3zJKpPCRvgdZ4FwuHFhgbT8JkyWFDfNNoveg/exec';
 
   var HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
@@ -663,6 +674,7 @@
   function ubahBatasTelur(){
     var on = document.getElementById('batasTelur').checked;
     try{ localStorage.setItem('batasTelur', on ? '1' : '0'); }catch(e){}
+    if(document.getElementById('prev-telur')) segarkanPreview('telur');
     toast(on ? 'Batas 65 mm nota Telur aktif' : 'Batas 65 mm nota Telur nonaktif','ok');
   }
 
@@ -683,25 +695,25 @@
 
   /* lv = tingkat pemadatan (0 = ukuran penuh). Dinaikkan otomatis bila nota melebihi batas panjang */
   function susunCleanter(o, lv){
-    var items = itemNota(o);
-    var sJudul = lv >= 5 ? 'normal' : CLEANTER_JUDUL;
-    var sNama = lv >= 4 ? 'normal' : CLEANTER_NAMA;
-    var sJenis = lv >= 3 ? 'normal' : CLEANTER_JENIS;
-    var sRinci = lv >= 2 ? 'normal' : CLEANTER_RINCIAN;
+    var items = itemNota(o), cfg = hurufNota(jenisNota(o));
+    var sJudul = lv >= 5 ? 'normal' : cfg.judul.size;
+    var sNama = lv >= 4 ? 'normal' : cfg.nama.size;
+    var sJenis = lv >= 3 ? 'normal' : cfg.jenis.size;
+    var sRinci = lv >= 2 ? 'normal' : cfg.rincian.size;
     var c = [];
-    c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:true, size:sJudul});
+    c.push({type:'text', text:'PT RAFASYA PUTRA USTANTO', align:'center', bold:cfg.judul.bold, size:sJudul});
     c.push({type:'text', text:'NOTA PENJUALAN', align:'center'});
     c.push({type:'divider'});
     c.push({type:'text', text:ascii(teksTanggal(o)), align:'left'});
-    c.push({type:'text', text:ascii(o.nama), align:'center', bold:true, size:sNama});
+    c.push({type:'text', text:ascii(o.nama), align:'center', bold:cfg.nama.bold, size:sNama});
     c.push({type:'divider'});
     items.forEach(function(it){
-      c.push({type:'text', text:ascii(it.judul), bold:true, size:sJenis});
-      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total), size:sRinci});
+      c.push({type:'text', text:ascii(it.judul), bold:cfg.jenis.bold, size:sJenis});
+      c.push({type:'row', left:qty(it.qty) + ' x ' + angka(it.harga), right:angka(it.total), bold:cfg.rincian.bold, size:sRinci});
     });
     c.push({type:'divider'});
-    if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:true, size:'large'});
-    else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:true});
+    if(CLEANTER_KERTAS >= 80) c.push({type:'text', text:'TOTAL  ' + rp(o.grandTotal), align:'right', bold:cfg.total.bold, size:cfg.total.size});
+    else c.push({type:'row', left:'TOTAL', right:rp(o.grandTotal), bold:cfg.total.bold});
     c.push({type:'feed', lines: lv >= 1 ? 1 : 2});
     return c;
   }
@@ -763,10 +775,11 @@
   /* ===== Cetak ke printer thermal 80 mm lewat aplikasi RawBT (ESC/POS) ===== */
   function susunEscPos(o, lv){
     var W = 48, out = [], mm = 0, fak = 1;
-    var items = itemNota(o);
-    var bJudul = lv < 4;
-    var bNama  = lv < 3;
-    var bJenis = lv < 2;
+    var items = itemNota(o), cfg = hurufNota(jenisNota(o));
+    var bJudul = cfg.judul.size === 'large' && lv < 5;
+    var bNama  = cfg.nama.size === 'large' && lv < 4;
+    var bJenis = cfg.jenis.size === 'large' && lv < 3;
+    var bRinci = cfg.rincian.size === 'large' && lv < 2;
     var feed   = lv >= 1 ? 1 : 3;
     function t(s){
       s = String(s).replace(/[^\x20-\x7E\n]/g,'?');
@@ -774,34 +787,37 @@
     }
     function cmd(){ for(var i=0;i<arguments.length;i++) out.push(arguments[i]); }
     function besar(on){ cmd(0x1D,0x21,on ? 0x01 : 0x00); fak = on ? 2 : 1; }   // tinggi 2x / normal
+    function tebal(on){ cmd(0x1B,0x45,on ? 1 : 0); }
     function pr(s,w){ s=String(s); while(s.length<w) s+=' '; return s.substring(0,w); }
     function pl(s,w){ s=String(s); while(s.length<w) s=' '+s; return s; }
     function garis(){ t(new Array(W+1).join('-')+'\n'); }
 
     cmd(0x1B,0x40);                       // reset printer
     cmd(0x1B,0x61,1);                     // rata tengah
-    cmd(0x1B,0x45,1); if(bJudul) besar(true);
+    tebal(cfg.judul.bold); if(bJudul) besar(true);
     t('PT RAFASYA PUTRA USTANTO\n');
-    besar(false); cmd(0x1B,0x45,0);
+    besar(false); tebal(false);
     t('NOTA PENJUALAN\n');
     cmd(0x1B,0x61,0);                     // rata kiri
     garis();
     t(String(teksTanggal(o)).substring(0,W)+'\n');   // tanggal rata kiri, tanpa label
-    cmd(0x1B,0x61,1); cmd(0x1B,0x45,1); if(bNama) besar(true);   // nama pembeli: tengah, tebal
+    cmd(0x1B,0x61,1); tebal(cfg.nama.bold); if(bNama) besar(true);   // nama pembeli: tengah
     var nm = String(o.nama);
     do { t(nm.substring(0,W)+'\n'); nm = nm.substring(W); } while(nm.length);
-    besar(false); cmd(0x1B,0x45,0); cmd(0x1B,0x61,0);
+    besar(false); tebal(false); cmd(0x1B,0x61,0);
     garis();
     items.forEach(function(it){
-      cmd(0x1B,0x45,1); if(bJenis) besar(true);                // jenis: tebal (+ tinggi 2x bila muat)
+      tebal(cfg.jenis.bold); if(bJenis) besar(true);
       t(String(it.judul).substring(0,W)+'\n');
-      besar(false); cmd(0x1B,0x45,0);
+      besar(false); tebal(false);
+      tebal(cfg.rincian.bold); if(bRinci) besar(true);
       t(pr(qty(it.qty)+' x '+angka(it.harga), W-16)+pl(angka(it.total),16)+'\n');
+      besar(false); tebal(false);
     });
     garis();
-    cmd(0x1B,0x45,1); besar(true);
+    tebal(cfg.total.bold); if(cfg.total.size === 'large') besar(true);
     t(pr('TOTAL',W-20)+pl(rp(o.grandTotal),20)+'\n');
-    besar(false); cmd(0x1B,0x45,0);
+    besar(false); tebal(false);
     cmd(0x1B,0x64,feed); mm += feed * NOTA_MM_BARIS;
     return {out: out, mm: mm};
   }
@@ -850,6 +866,107 @@
   function cetakTerakhir(){ if(NOTA_TERAKHIR) cetakThermal(NOTA_TERAKHIR); }
   function cetakDialogTerakhir(){ if(NOTA_TERAKHIR) cetakBrowser(NOTA_TERAKHIR); }
 
+  /* ===== Ukuran huruf nota (per jenis: telur, ikan, cetak), tersimpan di perangkat ini ===== */
+  var HURUF_ELEMEN = [['judul','Judul PT'],['nama','Nama pembeli'],['jenis','Nama jenis'],['rincian','Rincian (Qty x Harga, jumlah)'],['total','TOTAL']];
+
+  function hurufDefault(){
+    return {
+      judul:   {size: CLEANTER_JUDUL,   bold: true},
+      nama:    {size: CLEANTER_NAMA,    bold: true},
+      jenis:   {size: CLEANTER_JENIS,   bold: true},
+      rincian: {size: CLEANTER_RINCIAN, bold: false},
+      total:   {size: CLEANTER_KERTAS >= 80 ? 'large' : 'normal', bold: true}
+    };
+  }
+  function bacaHurufTersimpan(){
+    try{ return JSON.parse(localStorage.getItem('hurufNota') || '{}') || {}; }catch(e){ return {}; }
+  }
+  function tulisHurufTersimpan(all){ try{ localStorage.setItem('hurufNota', JSON.stringify(all)); }catch(e){} }
+  /* Pengaturan huruf untuk satu jenis nota; kertas 58 mm selalu normal */
+  function hurufNota(j){
+    var cfg = hurufDefault(), sv = bacaHurufTersimpan()[j] || {};
+    HURUF_ELEMEN.forEach(function(el){
+      var k = el[0], x = sv[k];
+      if(x){
+        if(x.size === 'normal' || x.size === 'large') cfg[k].size = x.size;
+        if(typeof x.bold === 'boolean') cfg[k].bold = x.bold;
+      }
+      if(CLEANTER_KERTAS < 80) cfg[k].size = 'normal';
+    });
+    return cfg;
+  }
+
+  /* Ubah isi Cleanter menjadi tampilan kertas (dipakai preview Rekap dan preview Pengaturan) */
+  function htmlKonten(c){
+    var h = '';
+    c.forEach(function(e){
+      var kls = (e.bold ? ' b' : '') + (e.size === 'large' ? ' besar' : '');
+      if(e.type === 'divider') h += '<div class="kt-garis"></div>';
+      else if(e.type === 'feed') h += '<div style="height:'+((e.lines||1)*8)+'px"></div>';
+      else if(e.type === 'row') h += '<div class="kt-row'+kls+'"><span>'+esc(e.left)+'</span><span>'+esc(e.right)+'</span></div>';
+      else h += '<div class="kt-txt'+kls+'" style="text-align:'+(e.align||'left')+'">'+esc(e.text)+'</div>';
+    });
+    return h;
+  }
+
+  function contohNota(j){
+    var tgl = hariIniLokal();
+    var o = {hari: hariDariTanggal(tgl), tanggal: tgl, nama: 'NAMA PEMBELI', noNota: 'CONTOH', tipe: j};
+    if(j === 'ikan'){
+      o.items = [{jenis:'Layang', qty:10, harga:27000, total:270000}, {jenis:'Semar K', qty:10, harga:23000, total:230000}];
+      o.grandTotal = 500000;
+    } else {
+      o.satuan = 'Kg';
+      o.besarQty = 10; o.besarHarga = 150000; o.besarTotal = 1500000;
+      o.kecilQty = 4;  o.kecilHarga = 50000;  o.kecilTotal = 200000;
+      o.grandTotal = 1700000;
+    }
+    return o;
+  }
+
+  function segarkanPreview(j){
+    var o = contohNota(j), c = buatKontenCleanter(o), b = batasPanjang(o);
+    document.getElementById('prev-'+j).innerHTML = htmlKonten(c);
+    document.getElementById('previnfo-'+j).textContent = 'Perkiraan panjang nota: ' + Math.round(taksirMmCleanter(c)) + ' mm' +
+      (b ? ' (batas ' + b + ' mm aktif, huruf bisa dikecilkan otomatis)' : '');
+  }
+
+  function renderHuruf(j){
+    var box = document.getElementById('huruf-'+j);
+    if(!box) return;
+    var cfg = hurufNota(j), bisaBesar = CLEANTER_KERTAS >= 80;
+    var h = '<div class="kartu"><h3>Ukuran Huruf Nota</h3><div class="hurufwrap"><div class="hf-form">';
+    HURUF_ELEMEN.forEach(function(el){
+      var k = el[0];
+      h += '<div class="hf-row"><span>'+el[1]+'</span>'+
+        '<select data-k="'+k+'" onchange="ubahHuruf(\''+j+'\')"'+(bisaBesar ? '' : ' disabled')+'>'+
+          '<option value="normal"'+(cfg[k].size === 'normal' ? ' selected' : '')+'>Normal</option>'+
+          '<option value="large"'+(cfg[k].size === 'large' ? ' selected' : '')+'>Besar</option></select>'+
+        '<label class="sw hf-tebal"><input type="checkbox" data-k="'+k+'" onchange="ubahHuruf(\''+j+'\')"'+(cfg[k].bold ? ' checked' : '')+'><span>Tebal</span></label></div>';
+    });
+    h += '<button class="btn sek" style="width:100%;margin-top:6px" onclick="resetHuruf(\''+j+'\')">Kembalikan standar</button>'+
+      '<div class="status-printer">Berlaku untuk cetak Cleanter dan RawBT di perangkat ini. Tulisan NOTA PENJUALAN dan tanggal selalu normal.</div></div>'+
+      '<div class="hf-prev"><div class="kertas" id="prev-'+j+'"></div><div class="status-printer" id="previnfo-'+j+'"></div></div></div></div>';
+    box.innerHTML = h;
+    segarkanPreview(j);
+  }
+
+  function ubahHuruf(j){
+    var box = document.getElementById('huruf-'+j), cfg = {};
+    HURUF_ELEMEN.forEach(function(el){
+      var k = el[0];
+      cfg[k] = {size: box.querySelector('select[data-k="'+k+'"]').value, bold: box.querySelector('input[data-k="'+k+'"]').checked};
+    });
+    var all = bacaHurufTersimpan(); all[j] = cfg; tulisHurufTersimpan(all);
+    segarkanPreview(j);
+  }
+
+  function resetHuruf(j){
+    var all = bacaHurufTersimpan(); delete all[j]; tulisHurufTersimpan(all);
+    renderHuruf(j);
+    toast('Ukuran huruf dikembalikan ke standar','ok');
+  }
+
   /* ===== Detail nota: tampilan seperti hasil cetak Cleanter ===== */
   var NOTA_LIHAT = null;
   function lihatNota(el){
@@ -857,15 +974,7 @@
     var o = j === 'ikan' ? (window.REKAP_IKAN||{})[no] : (window.REKAPJ[j]||{})[no];
     if(!o) return;
     NOTA_LIHAT = o;
-    var h = '';
-    buatKontenCleanter(o).forEach(function(c){
-      var kls = (c.bold ? ' b' : '') + (c.size === 'large' ? ' besar' : '');
-      if(c.type === 'divider') h += '<div class="kt-garis"></div>';
-      else if(c.type === 'feed') h += '<div style="height:'+((c.lines||1)*8)+'px"></div>';
-      else if(c.type === 'row') h += '<div class="kt-row'+kls+'"><span>'+esc(c.left)+'</span><span>'+esc(c.right)+'</span></div>';
-      else h += '<div class="kt-txt'+kls+'" style="text-align:'+(c.align||'left')+'">'+esc(c.text)+'</div>';
-    });
-    document.getElementById('isiNota').innerHTML = h;
+    document.getElementById('isiNota').innerHTML = htmlKonten(buatKontenCleanter(o));
     document.getElementById('modalNota').style.display = 'flex';
   }
   function tutupNota(){ document.getElementById('modalNota').style.display = 'none'; }
@@ -1332,6 +1441,7 @@
   }
 
   function muatPengaturan(){
+    ['telur','ikan','cetak'].forEach(renderHuruf);
     document.getElementById('daftarPengaturan').innerHTML = '<div class="kosong">Memuat...</div>';
     panggil('getDataIkan', [])
       .then(function(list){ DATA_IKAN = list || []; renderPengaturan(); renderDatalist(); },
